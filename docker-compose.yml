@@ -1,0 +1,25 @@
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.17
+    container_name: nexus-etcd
+    restart: unless-stopped
+    command:
+      - /usr/local/bin/etcd
+      - --name=nexus-etcd
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://127.0.0.1:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://127.0.0.1:2380
+      - --initial-cluster=nexus-etcd=http://127.0.0.1:2380
+      - --initial-cluster-state=new
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    volumes:
+      - ./data/etcd:/etcd-data
+    healthcheck:
+      test: ["CMD", "etcdctl", "--endpoints=http://127.0.0.1:2379", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
