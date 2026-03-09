@@ -1,0 +1,9 @@
+etcd:
+  endpoints:
+    - 127.0.0.1:2379
+  username: ""
+  password: ""
+  dialTimeout: 5s
+  requestTimeout: 3s
+  keyPrefix: /nexus/meta
+  leaseTTL: 10
