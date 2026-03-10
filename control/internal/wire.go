@@ -10,6 +10,7 @@ import (
 	"github.com/kidyme/nexus/common/log"
 	"github.com/kidyme/nexus/common/registry"
 	commonserver "github.com/kidyme/nexus/common/server"
+	controlconfig "github.com/kidyme/nexus/control/config"
 )
 
 // ProviderSet provides control runtime dependencies.
@@ -23,12 +24,12 @@ var ProviderSet = wire.NewSet(
 )
 
 // ProvideConfig loads the runtime config for control.
-func ProvideConfig() (*Config, error) {
-	return loadConfig()
+func ProvideConfig() (*controlconfig.Config, error) {
+	return controlconfig.Load()
 }
 
 // ProvideRegistry creates the service registry and its cleanup function.
-func ProvideRegistry(cfg *Config) (registry.Registry, func(), error) {
+func ProvideRegistry(cfg *controlconfig.Config) (registry.Registry, func(), error) {
 	nodeRegistry, err := registry.NewEtcdRegistry(cfg.ETCD)
 	if err != nil {
 		return nil, nil, err
@@ -42,7 +43,7 @@ func ProvideRegistry(cfg *Config) (registry.Registry, func(), error) {
 }
 
 // ProvideSelfNode creates the current control node metadata for registry registration.
-func ProvideSelfNode(cfg *Config) (registry.Node, error) {
+func ProvideSelfNode(cfg *controlconfig.Config) (registry.Node, error) {
 	if cfg.HTTP.AdvertiseAddr == "" {
 		return registry.Node{}, fmt.Errorf("control: http.advertiseAddr is required")
 	}
@@ -59,7 +60,7 @@ func ProvideSelfNode(cfg *Config) (registry.Node, error) {
 }
 
 // ProvideHeartbeatInterval derives the runtime heartbeat interval from the lease TTL.
-func ProvideHeartbeatInterval(cfg *Config) time.Duration {
+func ProvideHeartbeatInterval(cfg *controlconfig.Config) time.Duration {
 	ttl := cfg.ETCD.LeaseTTL
 	if ttl <= 1 {
 		return time.Second
@@ -68,6 +69,6 @@ func ProvideHeartbeatInterval(cfg *Config) time.Duration {
 }
 
 // ProvideHTTPServer creates the HTTP server for control.
-func ProvideHTTPServer(cfg *Config, router *gin.Engine) *commonserver.HTTPServer {
+func ProvideHTTPServer(cfg *controlconfig.Config, router *gin.Engine) *commonserver.HTTPServer {
 	return commonserver.NewHTTPServer(cfg.HTTP.Addr, router)
 }

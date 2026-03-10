@@ -1,4 +1,6 @@
-.PHONY: api wire test test-integration
+.PHONY: all api wire test test-int
+
+all: api wire
 
 api:
 	@./scripts/gen_openapi.sh
