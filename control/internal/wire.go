@@ -51,7 +51,7 @@ func ProvideSelfNode(cfg *controlconfig.Config) (registry.Node, error) {
 		return registry.Node{}, fmt.Errorf("control: service.version is required")
 	}
 	return registry.Node{
-		NodeID:      uuid.NewString(),
+		NodeID:      uuid.NewString()[:8],
 		ServiceName: "control",
 		Endpoint:    cfg.HTTP.AdvertiseAddr,
 		Status:      "available",
