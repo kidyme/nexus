@@ -104,6 +104,27 @@ func (r *EtcdRegistry) Heartbeat(ctx context.Context) error {
 	return nil
 }
 
+// List lists all alive nodes under the nodes prefix.
+func (r *EtcdRegistry) List(ctx context.Context) ([]Node, error) {
+	getCtx, cancel := r.withRequestTimeout(ctx)
+	defer cancel()
+
+	resp, err := r.client.Get(getCtx, nodesPrefix(r.config.KeyPrefix), clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+
+	nodes := make([]Node, 0, len(resp.Kvs))
+	for _, kv := range resp.Kvs {
+		var node Node
+		if err := json.Unmarshal(kv.Value, &node); err != nil {
+			return nil, err
+		}
+		nodes = append(nodes, node)
+	}
+	return nodes, nil
+}
+
 // Discover lists alive nodes under a service prefix.
 func (r *EtcdRegistry) Discover(ctx context.Context, serviceName string) ([]Node, error) {
 	getCtx, cancel := r.withRequestTimeout(ctx)
@@ -203,6 +224,10 @@ func validateNode(node Node) error {
 
 func servicePrefix(keyPrefix, serviceName string) string {
 	return path.Join(cleanKeyPrefix(keyPrefix), "nodes", serviceName) + "/"
+}
+
+func nodesPrefix(keyPrefix string) string {
+	return path.Join(cleanKeyPrefix(keyPrefix), "nodes") + "/"
 }
 
 func nodeKey(keyPrefix, serviceName, nodeID string) string {

@@ -25,6 +25,14 @@ func TestServicePrefix(t *testing.T) {
 	}
 }
 
+func TestNodesPrefix(t *testing.T) {
+	got := nodesPrefix("/nexus/meta")
+	want := "/nexus/meta/nodes/"
+	if got != want {
+		t.Fatalf("expected %s, got %s", want, got)
+	}
+}
+
 func TestValidateNode(t *testing.T) {
 	err := validateNode(Node{
 		NodeID:      "offline-01",

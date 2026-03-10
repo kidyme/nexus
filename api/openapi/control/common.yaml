@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info:
+  title: Nexus Control Common API
+  version: "0.1.0"
+  description: Common HTTP endpoints exposed by the control service.
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      summary: Health check
+      responses:
+        "200":
+          description: Service health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+components:
+  schemas:
+    HealthData:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Health status.
+    HealthResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+      properties:
+        errno:
+          type: integer
+          description: Error code. Zero means success.
+        msg:
+          type: string
+          description: Response message.
+        data:
+          $ref: "#/components/schemas/HealthData"
+        trace_id:
+          type: string
+          description: Request trace id.

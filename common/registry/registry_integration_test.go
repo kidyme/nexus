@@ -60,6 +60,14 @@ func TestEtcdRegistryIntegration(t *testing.T) {
 		t.Fatalf("expected discovered nodes to contain %s", node.NodeID)
 	}
 
+	allNodes, err := reg.List(ctx)
+	if err != nil {
+		t.Fatalf("list nodes: %v", err)
+	}
+	if !containsNode(allNodes, node.NodeID) {
+		t.Fatalf("expected all nodes to contain %s", node.NodeID)
+	}
+
 	beforeHeartbeat := probed.HeartbeatAt
 	time.Sleep(10 * time.Millisecond)
 	if err := reg.Heartbeat(ctx); err != nil {
