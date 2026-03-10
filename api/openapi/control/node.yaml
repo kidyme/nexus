@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: Nexus Control Node API
+  version: "0.1.0"
+  description: Node query APIs exposed by the control service.
+tags:
+  - name: node
+    description: Node read APIs
+paths:
+  /api/meta/nodes:
+    get:
+      operationId: listNodes
+      tags:
+        - node
+      summary: List nodes
+      parameters:
+        - name: service
+          in: query
+          required: false
+          description: Optional service name filter, such as control, offline, or online.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Node list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeListResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/meta/nodes/{node_id}:
+    get:
+      operationId: getNode
+      tags:
+        - node
+      summary: Get node detail
+      parameters:
+        - name: node_id
+          in: path
+          required: true
+          description: Globally unique node ID.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Node detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeDetailResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Node not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Node:
+      type: object
+      required:
+        - node_id
+        - service_name
+        - endpoint
+        - status
+        - version
+        - heartbeat_at
+      properties:
+        node_id:
+          type: string
+          description: Unique node identifier.
+        service_name:
+          type: string
+          description: Service name the node belongs to.
+        endpoint:
+          type: string
+          description: Node endpoint.
+        status:
+          type: string
+          description: Node status.
+        version:
+          type: string
+          description: Running version of the node.
+        heartbeat_at:
+          type: string
+          format: date-time
+          description: Latest heartbeat time in UTC.
+    ErrorResponse:
+      type: object
+      required:
+        - errno
+        - msg
+      properties:
+        errno:
+          type: integer
+          description: Error code.
+        msg:
+          type: string
+          description: Error message.
+        trace_id:
+          type: string
+          description: Request trace id.
+    NodeListResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+      properties:
+        errno:
+          type: integer
+          description: Error code. Zero means success.
+        msg:
+          type: string
+          description: Response message.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Node"
+        trace_id:
+          type: string
+          description: Request trace id.
+    NodeDetailResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+      properties:
+        errno:
+          type: integer
+          description: Error code. Zero means success.
+        msg:
+          type: string
+          description: Response message.
+        data:
+          $ref: "#/components/schemas/Node"
+        trace_id:
+          type: string
+          description: Request trace id.

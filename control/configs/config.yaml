@@ -1,3 +1,10 @@
+http:
+  addr: ":8080"
+  advertiseAddr: "127.0.0.1:8080"
+
+service:
+  version: "dev"
+
 etcd:
   endpoints:
     - 127.0.0.1:2379

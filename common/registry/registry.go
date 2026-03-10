@@ -35,6 +35,7 @@ type Node struct {
 type Registry interface {
 	Register(ctx context.Context, node Node) error
 	Heartbeat(ctx context.Context) error
+	List(ctx context.Context) ([]Node, error)
 	Discover(ctx context.Context, serviceName string) ([]Node, error)
 	Probe(ctx context.Context, serviceName, nodeID string) (*Node, error)
 	Deregister(ctx context.Context) error
