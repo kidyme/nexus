@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/kidyme/nexus/common/registry"
-	nodeapp "github.com/kidyme/nexus/control/internal/control/application/node"
-	nodedomain "github.com/kidyme/nexus/control/internal/control/domain/node"
+	nodeapp "github.com/kidyme/nexus/control/internal/application/node"
+	nodedomain "github.com/kidyme/nexus/control/internal/domain/node"
 )
 
 func TestListNodesRoute(t *testing.T) {

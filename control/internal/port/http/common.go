@@ -3,7 +3,7 @@ package httpport
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/kidyme/nexus/common/httpx"
-	commongen "github.com/kidyme/nexus/control/internal/control/port/http/gen/common"
+	commongen "github.com/kidyme/nexus/control/internal/port/http/gen/common"
 )
 
 // CommonHandler implements common HTTP endpoints for control.

@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	nodedomain "github.com/kidyme/nexus/control/internal/control/domain/node"
+	nodedomain "github.com/kidyme/nexus/control/internal/domain/node"
 )
 
 type fakeNodeRepository struct {

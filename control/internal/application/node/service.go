@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strings"
 
-	nodedomain "github.com/kidyme/nexus/control/internal/control/domain/node"
+	nodedomain "github.com/kidyme/nexus/control/internal/domain/node"
 )
 
 var ErrServiceNameRequired = errors.New("node application: service name is required")

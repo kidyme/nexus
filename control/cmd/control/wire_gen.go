@@ -7,10 +7,10 @@
 package main
 
 import (
-	"github.com/kidyme/nexus/control/internal/control"
-	node2 "github.com/kidyme/nexus/control/internal/control/application/node"
-	"github.com/kidyme/nexus/control/internal/control/infrastructure/node"
-	"github.com/kidyme/nexus/control/internal/control/port/http"
+	"github.com/kidyme/nexus/control/internal"
+	node2 "github.com/kidyme/nexus/control/internal/application/node"
+	"github.com/kidyme/nexus/control/internal/infrastructure/node"
+	"github.com/kidyme/nexus/control/internal/port/http"
 )
 
 // Injectors from wire.go:

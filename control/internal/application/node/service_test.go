@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	nodedomain "github.com/kidyme/nexus/control/internal/control/domain/node"
+	nodedomain "github.com/kidyme/nexus/control/internal/domain/node"
 )
 
 type fakeRepository struct {

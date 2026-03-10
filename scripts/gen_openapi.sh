@@ -22,7 +22,7 @@ for spec in "${specs[@]}"; do
   node_name="$(basename "$(dirname "$spec")")"
   service_name="$(basename "$spec" .yaml)"
   package_name="${service_name}gen"
-  output_dir="$ROOT_DIR/$node_name/internal/$node_name/port/http/gen/$service_name"
+  output_dir="$ROOT_DIR/$node_name/internal/port/http/gen/$service_name"
   output_file="$output_dir/${service_name}_gen.go"
 
   mkdir -p "$output_dir"

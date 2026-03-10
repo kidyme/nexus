@@ -6,10 +6,10 @@ package main
 
 import (
 	"github.com/google/wire"
-	control "github.com/kidyme/nexus/control/internal/control"
-	nodeapp "github.com/kidyme/nexus/control/internal/control/application/node"
-	nodeinfra "github.com/kidyme/nexus/control/internal/control/infrastructure/node"
-	httpport "github.com/kidyme/nexus/control/internal/control/port/http"
+	control "github.com/kidyme/nexus/control/internal"
+	nodeapp "github.com/kidyme/nexus/control/internal/application/node"
+	nodeinfra "github.com/kidyme/nexus/control/internal/infrastructure/node"
+	httpport "github.com/kidyme/nexus/control/internal/port/http"
 )
 
 // InitializeApp creates the fully wired control runtime.

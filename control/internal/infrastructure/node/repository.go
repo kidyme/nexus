@@ -5,7 +5,7 @@ import (
 	"context"
 
 	"github.com/kidyme/nexus/common/registry"
-	nodedomain "github.com/kidyme/nexus/control/internal/control/domain/node"
+	nodedomain "github.com/kidyme/nexus/control/internal/domain/node"
 )
 
 // Repository is a registry-backed node repository.

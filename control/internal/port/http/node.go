@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kidyme/nexus/common/httpx"
 	"github.com/kidyme/nexus/common/registry"
-	nodeapp "github.com/kidyme/nexus/control/internal/control/application/node"
-	nodedomain "github.com/kidyme/nexus/control/internal/control/domain/node"
-	nodegen "github.com/kidyme/nexus/control/internal/control/port/http/gen/node"
+	nodeapp "github.com/kidyme/nexus/control/internal/application/node"
+	nodedomain "github.com/kidyme/nexus/control/internal/domain/node"
+	nodegen "github.com/kidyme/nexus/control/internal/port/http/gen/node"
 )
 
 // NodeHandler implements the generated OpenAPI server interface.
