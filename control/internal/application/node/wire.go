@@ -2,5 +2,5 @@ package node
 
 import "github.com/google/wire"
 
-// ProviderSet provides node application services.
+// ProviderSet 提供 node 应用服务依赖。
 var ProviderSet = wire.NewSet(NewService)

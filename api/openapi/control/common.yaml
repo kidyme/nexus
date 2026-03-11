@@ -2,15 +2,15 @@ openapi: 3.0.3
 info:
   title: Nexus Control Common API
   version: "0.1.0"
-  description: Common HTTP endpoints exposed by the control service.
+  description: control 服务暴露的通用 HTTP 接口。
 paths:
   /healthz:
     get:
       operationId: healthz
-      summary: Health check
+      summary: 健康检查
       responses:
         "200":
-          description: Service health
+          description: 服务健康状态
           content:
             application/json:
               schema:
@@ -24,7 +24,7 @@ components:
       properties:
         status:
           type: string
-          description: Health status.
+          description: 健康状态。
     HealthResponse:
       type: object
       required:
@@ -34,12 +34,12 @@ components:
       properties:
         errno:
           type: integer
-          description: Error code. Zero means success.
+          description: 错误码，0 表示成功。
         msg:
           type: string
-          description: Response message.
+          description: 响应消息。
         data:
           $ref: "#/components/schemas/HealthData"
         trace_id:
           type: string
-          description: Request trace id.
+          description: 请求 trace id。

@@ -1,4 +1,4 @@
-// Package config defines control service configuration.
+// Package config 定义 control 服务配置。
 package config
 
 import (
@@ -6,25 +6,25 @@ import (
 	"github.com/kidyme/nexus/common/registry"
 )
 
-// Config defines the control service configuration model.
+// Config 定义 control 服务配置模型。
 type Config struct {
 	HTTP    HTTPConfig      `mapstructure:"http"`
 	Service ServiceConfig   `mapstructure:"service"`
 	ETCD    registry.Config `mapstructure:"etcd"`
 }
 
-// HTTPConfig defines HTTP listener and advertise addresses.
+// HTTPConfig 定义 HTTP 监听地址与对外通告地址。
 type HTTPConfig struct {
 	Addr          string `mapstructure:"addr"`
 	AdvertiseAddr string `mapstructure:"advertiseAddr"`
 }
 
-// ServiceConfig defines service-level runtime metadata.
+// ServiceConfig 定义服务级运行时元信息。
 type ServiceConfig struct {
 	Version string `mapstructure:"version"`
 }
 
-// Load loads the control service configuration with defaults.
+// Load 加载 control 服务配置并填充默认值。
 func Load() (*Config, error) {
 	cfg := &Config{
 		HTTP:    HTTPConfig{Addr: ":8080"},

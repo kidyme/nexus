@@ -1,4 +1,4 @@
-// Package control contains the private runtime of the control service.
+// Package control 提供 control 服务的私有运行时实现。
 package control
 
 import (
@@ -15,7 +15,7 @@ import (
 	commonserver "github.com/kidyme/nexus/common/server"
 )
 
-// App contains the runtime dependencies of the control service.
+// App 持有 control 服务运行时依赖。
 type App struct {
 	httpServer        *commonserver.HTTPServer
 	nodeRegistry      registry.Registry
@@ -23,7 +23,7 @@ type App struct {
 	heartbeatInterval time.Duration
 }
 
-// NewApp creates a control runtime with injected dependencies.
+// NewApp 创建注入依赖后的 control 运行时。
 func NewApp(httpServer *commonserver.HTTPServer, nodeRegistry registry.Registry, node registry.Node, heartbeatInterval time.Duration) *App {
 	return &App{
 		httpServer:        httpServer,
@@ -33,7 +33,7 @@ func NewApp(httpServer *commonserver.HTTPServer, nodeRegistry registry.Registry,
 	}
 }
 
-// Run starts the control runtime and handles graceful shutdown.
+// Run 启动 control 运行时并处理优雅退出。
 func (a *App) Run() error {
 	if err := a.nodeRegistry.Register(context.Background(), a.node); err != nil {
 		return err

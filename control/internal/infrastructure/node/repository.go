@@ -1,4 +1,4 @@
-// Package node provides node repository implementations.
+// Package node 提供 node 仓储实现。
 package node
 
 import (
@@ -8,17 +8,17 @@ import (
 	nodedomain "github.com/kidyme/nexus/control/internal/domain/node"
 )
 
-// Repository is a registry-backed node repository.
+// Repository 是基于 registry 的 node 仓储实现。
 type Repository struct {
 	registry registry.Registry
 }
 
-// NewRepository creates a node repository backed by common/registry.
+// NewRepository 创建基于 common/registry 的 node 仓储。
 func NewRepository(nodeRegistry registry.Registry) *Repository {
 	return &Repository{registry: nodeRegistry}
 }
 
-// List returns all nodes.
+// List 返回全部节点。
 func (r *Repository) List(ctx context.Context) ([]nodedomain.Node, error) {
 	nodes, err := r.registry.List(ctx)
 	if err != nil {
@@ -32,7 +32,7 @@ func (r *Repository) List(ctx context.Context) ([]nodedomain.Node, error) {
 	return result, nil
 }
 
-// ListByService returns all nodes for a service.
+// ListByService 返回指定服务下的全部节点。
 func (r *Repository) ListByService(ctx context.Context, serviceName string) ([]nodedomain.Node, error) {
 	nodes, err := r.registry.Discover(ctx, serviceName)
 	if err != nil {
@@ -46,7 +46,7 @@ func (r *Repository) ListByService(ctx context.Context, serviceName string) ([]n
 	return result, nil
 }
 
-// Find returns a single node by its globally unique ID.
+// Find 根据全局唯一 node ID 返回单个节点。
 func (r *Repository) Find(ctx context.Context, nodeID string) (*nodedomain.Node, error) {
 	nodes, err := r.registry.List(ctx)
 	if err != nil {

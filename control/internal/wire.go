@@ -13,7 +13,7 @@ import (
 	controlconfig "github.com/kidyme/nexus/control/config"
 )
 
-// ProviderSet provides control runtime dependencies.
+// ProviderSet 提供 control 运行时依赖。
 var ProviderSet = wire.NewSet(
 	ProvideConfig,
 	ProvideRegistry,
@@ -23,12 +23,12 @@ var ProviderSet = wire.NewSet(
 	NewApp,
 )
 
-// ProvideConfig loads the runtime config for control.
+// ProvideConfig 加载 control 运行时配置。
 func ProvideConfig() (*controlconfig.Config, error) {
 	return controlconfig.Load()
 }
 
-// ProvideRegistry creates the service registry and its cleanup function.
+// ProvideRegistry 创建服务注册中心及其清理函数。
 func ProvideRegistry(cfg *controlconfig.Config) (registry.Registry, func(), error) {
 	nodeRegistry, err := registry.NewEtcdRegistry(cfg.ETCD)
 	if err != nil {
@@ -42,7 +42,7 @@ func ProvideRegistry(cfg *controlconfig.Config) (registry.Registry, func(), erro
 	return nodeRegistry, cleanup, nil
 }
 
-// ProvideSelfNode creates the current control node metadata for registry registration.
+// ProvideSelfNode 创建当前 control 节点的注册元信息。
 func ProvideSelfNode(cfg *controlconfig.Config) (registry.Node, error) {
 	if cfg.HTTP.AdvertiseAddr == "" {
 		return registry.Node{}, fmt.Errorf("control: http.advertiseAddr is required")
@@ -59,7 +59,7 @@ func ProvideSelfNode(cfg *controlconfig.Config) (registry.Node, error) {
 	}, nil
 }
 
-// ProvideHeartbeatInterval derives the runtime heartbeat interval from the lease TTL.
+// ProvideHeartbeatInterval 根据租约 TTL 推导运行时心跳间隔。
 func ProvideHeartbeatInterval(cfg *controlconfig.Config) time.Duration {
 	ttl := cfg.ETCD.LeaseTTL
 	if ttl <= 1 {
@@ -68,7 +68,7 @@ func ProvideHeartbeatInterval(cfg *controlconfig.Config) time.Duration {
 	return time.Duration(ttl/2) * time.Second
 }
 
-// ProvideHTTPServer creates the HTTP server for control.
+// ProvideHTTPServer 创建 control 的 HTTP 服务。
 func ProvideHTTPServer(cfg *controlconfig.Config, router *gin.Engine) *commonserver.HTTPServer {
 	return commonserver.NewHTTPServer(cfg.HTTP.Addr, router)
 }

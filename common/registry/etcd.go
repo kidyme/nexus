@@ -16,7 +16,7 @@ const (
 	defaultLeaseTTL  int64 = 10
 )
 
-// EtcdRegistry implements service registration on top of etcd.
+// EtcdRegistry 基于 etcd 实现服务注册。
 type EtcdRegistry struct {
 	client *clientv3.Client
 	config Config
@@ -24,7 +24,7 @@ type EtcdRegistry struct {
 	lease  clientv3.LeaseID
 }
 
-// NewEtcdRegistry creates a registry backed by etcd.
+// NewEtcdRegistry 创建基于 etcd 的注册中心。
 func NewEtcdRegistry(cfg Config) (*EtcdRegistry, error) {
 	if len(cfg.Endpoints) == 0 {
 		return nil, ErrEndpointsRequired
@@ -58,7 +58,7 @@ func NewEtcdRegistry(cfg Config) (*EtcdRegistry, error) {
 	}, nil
 }
 
-// Register registers the current node with a lease.
+// Register 使用租约注册当前节点。
 func (r *EtcdRegistry) Register(ctx context.Context, node Node) error {
 	if err := validateNode(node); err != nil {
 		return err
@@ -82,7 +82,7 @@ func (r *EtcdRegistry) Register(ctx context.Context, node Node) error {
 	return nil
 }
 
-// Heartbeat refreshes the node lease and heartbeat timestamp.
+// Heartbeat 刷新节点租约与心跳时间戳。
 func (r *EtcdRegistry) Heartbeat(ctx context.Context) error {
 	if r.node == nil || r.lease == 0 {
 		return ErrNodeNotFound
@@ -104,7 +104,7 @@ func (r *EtcdRegistry) Heartbeat(ctx context.Context) error {
 	return nil
 }
 
-// List lists all alive nodes under the nodes prefix.
+// List 列出节点前缀下的全部存活节点。
 func (r *EtcdRegistry) List(ctx context.Context) ([]Node, error) {
 	getCtx, cancel := r.withRequestTimeout(ctx)
 	defer cancel()
@@ -125,7 +125,7 @@ func (r *EtcdRegistry) List(ctx context.Context) ([]Node, error) {
 	return nodes, nil
 }
 
-// Discover lists alive nodes under a service prefix.
+// Discover 列出指定服务前缀下的存活节点。
 func (r *EtcdRegistry) Discover(ctx context.Context, serviceName string) ([]Node, error) {
 	getCtx, cancel := r.withRequestTimeout(ctx)
 	defer cancel()
@@ -146,7 +146,7 @@ func (r *EtcdRegistry) Discover(ctx context.Context, serviceName string) ([]Node
 	return nodes, nil
 }
 
-// Probe checks whether a single node is still alive in etcd.
+// Probe 检查单个节点是否仍在 etcd 中存活。
 func (r *EtcdRegistry) Probe(ctx context.Context, serviceName, nodeID string) (*Node, error) {
 	getCtx, cancel := r.withRequestTimeout(ctx)
 	defer cancel()
@@ -166,7 +166,7 @@ func (r *EtcdRegistry) Probe(ctx context.Context, serviceName, nodeID string) (*
 	return &node, nil
 }
 
-// Deregister deletes the current node and revokes the lease.
+// Deregister 删除当前节点并撤销租约。
 func (r *EtcdRegistry) Deregister(ctx context.Context) error {
 	if r.node == nil || r.lease == 0 {
 		return nil
@@ -189,7 +189,7 @@ func (r *EtcdRegistry) Deregister(ctx context.Context) error {
 	return nil
 }
 
-// Close closes the underlying etcd client.
+// Close 关闭底层 etcd 客户端。
 func (r *EtcdRegistry) Close() error {
 	return r.client.Close()
 }

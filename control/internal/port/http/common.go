@@ -6,22 +6,22 @@ import (
 	commongen "github.com/kidyme/nexus/control/internal/port/http/gen/common"
 )
 
-// CommonHandler implements common HTTP endpoints for control.
+// CommonHandler 实现 control 的通用 HTTP 接口。
 type CommonHandler struct{}
 
-// NewCommonHandler creates a common handler.
+// NewCommonHandler 创建通用 handler。
 func NewCommonHandler() *CommonHandler {
 	return &CommonHandler{}
 }
 
-// registerCommonRoutes registers shared HTTP routes.
+// registerCommonRoutes 注册共享 HTTP 路由。
 func registerCommonRoutes(router gin.IRouter, handler *CommonHandler) {
 	commongen.RegisterHandlersWithOptions(router, handler, commongen.GinServerOptions{
 		ErrorHandler: openAPIErrorHandler,
 	})
 }
 
-// Healthz handles GET /healthz.
+// Healthz 处理 GET /healthz。
 func (h *CommonHandler) Healthz(c *gin.Context) {
 	httpx.OK(c, gin.H{"status": "ok"})
 }

@@ -15,7 +15,7 @@ import (
 
 // Injectors from wire.go:
 
-// InitializeApp creates the fully wired control runtime.
+// InitializeApp 创建完成依赖注入的 control 运行时。
 func InitializeApp() (*control.App, func(), error) {
 	config, err := control.ProvideConfig()
 	if err != nil {

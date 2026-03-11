@@ -12,24 +12,24 @@ import (
 	nodegen "github.com/kidyme/nexus/control/internal/port/http/gen/node"
 )
 
-// NodeHandler implements the generated OpenAPI server interface.
+// NodeHandler 实现生成的 OpenAPI 服务端接口。
 type NodeHandler struct {
 	service *nodeapp.Service
 }
 
-// registerNodeRoutes registers node-related HTTP routes.
+// registerNodeRoutes 注册 node 相关 HTTP 路由。
 func registerNodeRoutes(router gin.IRouter, handler *NodeHandler) {
 	nodegen.RegisterHandlersWithOptions(router, handler, nodegen.GinServerOptions{
 		ErrorHandler: openAPIErrorHandler,
 	})
 }
 
-// NewNodeHandler creates a node handler.
+// NewNodeHandler 创建 node handler。
 func NewNodeHandler(nodeService *nodeapp.Service) *NodeHandler {
 	return &NodeHandler{service: nodeService}
 }
 
-// ListNodes handles GET /api/meta/nodes.
+// ListNodes 处理 GET /api/meta/nodes。
 func (h *NodeHandler) ListNodes(c *gin.Context, params nodegen.ListNodesParams) {
 	var (
 		nodes []nodedomain.Node
@@ -52,7 +52,7 @@ func (h *NodeHandler) ListNodes(c *gin.Context, params nodegen.ListNodesParams) 
 	httpx.OK(c, result)
 }
 
-// GetNode handles GET /api/meta/nodes/{node_id}.
+// GetNode 处理 GET /api/meta/nodes/{node_id}。
 func (h *NodeHandler) GetNode(c *gin.Context, nodeID string) {
 	item, err := h.service.Find(c.Request.Context(), nodeID)
 	if err != nil {

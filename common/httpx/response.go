@@ -1,4 +1,4 @@
-// Package httpx provides shared HTTP response helpers.
+// Package httpx 提供共享 HTTP 响应辅助能力。
 package httpx
 
 import (
@@ -16,7 +16,7 @@ const (
 	traceIDHeader     = "X-Trace-Id"
 )
 
-// Response is the shared HTTP response envelope.
+// Response 是共享 HTTP 响应包裹结构。
 type Response[T any] struct {
 	Errno   int    `json:"errno"`
 	Message string `json:"msg"`
@@ -24,7 +24,7 @@ type Response[T any] struct {
 	TraceID string `json:"trace_id"`
 }
 
-// OK writes a success response.
+// OK 写入成功响应。
 func OK[T any](c *gin.Context, data T) {
 	c.JSON(http.StatusOK, Response[T]{
 		Errno:   ErrnoOK,
@@ -34,7 +34,7 @@ func OK[T any](c *gin.Context, data T) {
 	})
 }
 
-// Fail writes an error response.
+// Fail 写入失败响应。
 func Fail(c *gin.Context, httpStatus, errno int, msg string) {
 	c.JSON(httpStatus, Response[any]{
 		Errno:   errno,
@@ -43,22 +43,22 @@ func Fail(c *gin.Context, httpStatus, errno int, msg string) {
 	})
 }
 
-// BadRequest writes a 400 error response.
+// BadRequest 写入 400 错误响应。
 func BadRequest(c *gin.Context, msg string) {
 	Fail(c, http.StatusBadRequest, ErrnoBadRequest, msg)
 }
 
-// NotFound writes a 404 error response.
+// NotFound 写入 404 错误响应。
 func NotFound(c *gin.Context, msg string) {
 	Fail(c, http.StatusNotFound, ErrnoNotFound, msg)
 }
 
-// InternalError writes a 500 error response.
+// InternalError 写入 500 错误响应。
 func InternalError(c *gin.Context, msg string) {
 	Fail(c, http.StatusInternalServerError, ErrnoInternal, msg)
 }
 
-// TraceID returns the current trace id if present.
+// TraceID 返回当前 trace id；若不存在则返回空字符串。
 func TraceID(c *gin.Context) string {
 	if traceID := c.GetString(traceIDContextKey); traceID != "" {
 		return traceID
