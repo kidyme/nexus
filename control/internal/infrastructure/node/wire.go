@@ -5,7 +5,7 @@ import (
 	nodedomain "github.com/kidyme/nexus/control/internal/domain/node"
 )
 
-// ProviderSet provides node repository implementations.
+// ProviderSet 提供 node 仓储实现依赖。
 var ProviderSet = wire.NewSet(
 	NewRepository,
 	wire.Bind(new(nodedomain.Repository), new(*Repository)),

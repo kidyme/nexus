@@ -12,7 +12,7 @@ import (
 	httpport "github.com/kidyme/nexus/control/internal/port/http"
 )
 
-// InitializeApp creates the fully wired control runtime.
+// InitializeApp 创建完成依赖注入的 control 运行时。
 func InitializeApp() (*control.App, func(), error) {
 	wire.Build(
 		control.ProviderSet,

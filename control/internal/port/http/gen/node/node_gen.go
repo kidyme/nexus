@@ -21,34 +21,34 @@ import (
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
-	// Errno Error code.
+	// Errno 错误码。
 	Errno int `json:"errno"`
 
-	// Msg Error message.
+	// Msg 错误信息。
 	Msg string `json:"msg"`
 
-	// TraceId Request trace id.
+	// TraceId 请求 trace id。
 	TraceId *string `json:"trace_id,omitempty"`
 }
 
 // Node defines model for Node.
 type Node struct {
-	// Endpoint Node endpoint.
+	// Endpoint 节点访问地址。
 	Endpoint string `json:"endpoint"`
 
-	// HeartbeatAt Latest heartbeat time in UTC.
+	// HeartbeatAt 最近一次 UTC 心跳时间。
 	HeartbeatAt time.Time `json:"heartbeat_at"`
 
-	// NodeId Unique node identifier.
+	// NodeId 全局唯一节点标识。
 	NodeId string `json:"node_id"`
 
-	// ServiceName Service name the node belongs to.
+	// ServiceName 节点所属服务名。
 	ServiceName string `json:"service_name"`
 
-	// Status Node status.
+	// Status 节点状态。
 	Status string `json:"status"`
 
-	// Version Running version of the node.
+	// Version 节点运行版本。
 	Version string `json:"version"`
 }
 
@@ -56,13 +56,13 @@ type Node struct {
 type NodeDetailResponse struct {
 	Data Node `json:"data"`
 
-	// Errno Error code. Zero means success.
+	// Errno 错误码，0 表示成功。
 	Errno int `json:"errno"`
 
-	// Msg Response message.
+	// Msg 响应消息。
 	Msg string `json:"msg"`
 
-	// TraceId Request trace id.
+	// TraceId 请求 trace id。
 	TraceId *string `json:"trace_id,omitempty"`
 }
 
@@ -70,28 +70,28 @@ type NodeDetailResponse struct {
 type NodeListResponse struct {
 	Data []Node `json:"data"`
 
-	// Errno Error code. Zero means success.
+	// Errno 错误码，0 表示成功。
 	Errno int `json:"errno"`
 
-	// Msg Response message.
+	// Msg 响应消息。
 	Msg string `json:"msg"`
 
-	// TraceId Request trace id.
+	// TraceId 请求 trace id。
 	TraceId *string `json:"trace_id,omitempty"`
 }
 
 // ListNodesParams defines parameters for ListNodes.
 type ListNodesParams struct {
-	// Service Optional service name filter, such as control, offline, or online.
+	// Service 可选的服务名过滤条件，例如 control、offline、online。
 	Service *string `form:"service,omitempty" json:"service,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// List nodes
+	// 查询节点列表
 	// (GET /api/meta/nodes)
 	ListNodes(c *gin.Context, params ListNodesParams)
-	// Get node detail
+	// 查询节点详情
 	// (GET /api/meta/nodes/{node_id})
 	GetNode(c *gin.Context, nodeId string)
 }
@@ -189,19 +189,22 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"DAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

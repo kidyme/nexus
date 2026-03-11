@@ -2,39 +2,39 @@ openapi: 3.0.3
 info:
   title: Nexus Control Node API
   version: "0.1.0"
-  description: Node query APIs exposed by the control service.
+  description: control 服务暴露的节点查询接口。
 tags:
   - name: node
-    description: Node read APIs
+    description: 节点查询接口
 paths:
   /api/meta/nodes:
     get:
       operationId: listNodes
       tags:
         - node
-      summary: List nodes
+      summary: 查询节点列表
       parameters:
         - name: service
           in: query
           required: false
-          description: Optional service name filter, such as control, offline, or online.
+          description: 可选的服务名过滤条件，例如 control、offline、online。
           schema:
             type: string
       responses:
         "200":
-          description: Node list
+          description: 节点列表
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NodeListResponse"
         "400":
-          description: Invalid request
+          description: 非法请求
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: Internal server error
+          description: 服务器内部错误
           content:
             application/json:
               schema:
@@ -44,35 +44,35 @@ paths:
       operationId: getNode
       tags:
         - node
-      summary: Get node detail
+      summary: 查询节点详情
       parameters:
         - name: node_id
           in: path
           required: true
-          description: Globally unique node ID.
+          description: 全局唯一节点 ID。
           schema:
             type: string
       responses:
         "200":
-          description: Node detail
+          description: 节点详情
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NodeDetailResponse"
         "400":
-          description: Invalid request
+          description: 非法请求
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
-          description: Node not found
+          description: 节点不存在
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: Internal server error
+          description: 服务器内部错误
           content:
             application/json:
               schema:
@@ -91,23 +91,23 @@ components:
       properties:
         node_id:
           type: string
-          description: Unique node identifier.
+          description: 全局唯一节点标识。
         service_name:
           type: string
-          description: Service name the node belongs to.
+          description: 节点所属服务名。
         endpoint:
           type: string
-          description: Node endpoint.
+          description: 节点访问地址。
         status:
           type: string
-          description: Node status.
+          description: 节点状态。
         version:
           type: string
-          description: Running version of the node.
+          description: 节点运行版本。
         heartbeat_at:
           type: string
           format: date-time
-          description: Latest heartbeat time in UTC.
+          description: 最近一次 UTC 心跳时间。
     ErrorResponse:
       type: object
       required:
@@ -116,13 +116,13 @@ components:
       properties:
         errno:
           type: integer
-          description: Error code.
+          description: 错误码。
         msg:
           type: string
-          description: Error message.
+          description: 错误信息。
         trace_id:
           type: string
-          description: Request trace id.
+          description: 请求 trace id。
     NodeListResponse:
       type: object
       required:
@@ -132,17 +132,17 @@ components:
       properties:
         errno:
           type: integer
-          description: Error code. Zero means success.
+          description: 错误码，0 表示成功。
         msg:
           type: string
-          description: Response message.
+          description: 响应消息。
         data:
           type: array
           items:
             $ref: "#/components/schemas/Node"
         trace_id:
           type: string
-          description: Request trace id.
+          description: 请求 trace id。
     NodeDetailResponse:
       type: object
       required:
@@ -152,12 +152,12 @@ components:
       properties:
         errno:
           type: integer
-          description: Error code. Zero means success.
+          description: 错误码，0 表示成功。
         msg:
           type: string
-          description: Response message.
+          description: 响应消息。
         data:
           $ref: "#/components/schemas/Node"
         trace_id:
           type: string
-          description: Request trace id.
+          description: 请求 trace id。

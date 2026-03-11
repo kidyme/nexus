@@ -1,4 +1,4 @@
-// Package config provides shared configuration helpers.
+// Package config 提供共享配置加载辅助能力。
 package config
 
 import (

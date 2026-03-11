@@ -1,4 +1,4 @@
-// Package httpport provides HTTP ports for the control service.
+// Package httpport 提供 control 服务的 HTTP 端口适配层。
 package httpport
 
 import (
@@ -6,13 +6,13 @@ import (
 	"github.com/kidyme/nexus/common/httpx"
 )
 
-// Handlers groups HTTP handlers required by the router.
+// Handlers 汇总路由所需的 HTTP handler。
 type Handlers struct {
 	Common *CommonHandler
 	Node   *NodeHandler
 }
 
-// NewRouter creates the HTTP router for control.
+// NewRouter 创建 control 的 HTTP 路由。
 func NewRouter(handlers Handlers) *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery())

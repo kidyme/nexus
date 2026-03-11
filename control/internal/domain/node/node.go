@@ -1,4 +1,4 @@
-// Package node defines the read model for control node queries.
+// Package node 定义 control 节点查询的读模型。
 package node
 
 import (
@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	// StatusAvailable marks a node as available.
+	// StatusAvailable 表示节点可用。
 	StatusAvailable = "available"
 )
 
-// Node is the node read model exposed by control.
+// Node 是 control 暴露的节点读模型。
 type Node struct {
 	NodeID      string    `json:"node_id"`
 	ServiceName string    `json:"service_name"`
@@ -21,12 +21,12 @@ type Node struct {
 	HeartbeatAt time.Time `json:"heartbeat_at"`
 }
 
-// IsAvailable reports whether the node is available.
+// IsAvailable 判断节点是否可用。
 func (n Node) IsAvailable() bool {
 	return n.Status == StatusAvailable
 }
 
-// Repository defines read access to node metadata.
+// Repository 定义节点元数据的读取接口。
 type Repository interface {
 	List(ctx context.Context) ([]Node, error)
 	ListByService(ctx context.Context, serviceName string) ([]Node, error)

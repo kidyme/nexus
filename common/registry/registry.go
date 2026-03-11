@@ -1,4 +1,4 @@
-// Package registry provides shared service registration helpers.
+// Package registry 提供共享的服务注册辅助能力。
 package registry
 
 import (
@@ -10,7 +10,7 @@ import (
 var ErrNodeNotFound = errors.New("registry: node not found")
 var ErrEndpointsRequired = errors.New("registry: endpoints are required")
 
-// Config describes shared registry configuration.
+// Config 描述共享注册中心配置。
 type Config struct {
 	Endpoints      []string      `mapstructure:"endpoints"`
 	Username       string        `mapstructure:"username"`
@@ -21,7 +21,7 @@ type Config struct {
 	LeaseTTL       int64         `mapstructure:"leaseTTL"`
 }
 
-// Node describes a service node stored in the registry.
+// Node 描述注册中心中存储的服务节点。
 type Node struct {
 	NodeID      string    `json:"node_id"`
 	ServiceName string    `json:"service_name"`
@@ -31,7 +31,7 @@ type Node struct {
 	HeartbeatAt time.Time `json:"heartbeat_at"`
 }
 
-// Registry defines the shared service registration contract.
+// Registry 定义共享服务注册契约。
 type Registry interface {
 	Register(ctx context.Context, node Node) error
 	Heartbeat(ctx context.Context) error

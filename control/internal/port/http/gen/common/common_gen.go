@@ -18,7 +18,7 @@ import (
 
 // HealthData defines model for HealthData.
 type HealthData struct {
-	// Status Health status.
+	// Status 健康状态。
 	Status string `json:"status"`
 }
 
@@ -26,19 +26,19 @@ type HealthData struct {
 type HealthResponse struct {
 	Data HealthData `json:"data"`
 
-	// Errno Error code. Zero means success.
+	// Errno 错误码，0 表示成功。
 	Errno int `json:"errno"`
 
-	// Msg Response message.
+	// Msg 响应消息。
 	Msg string `json:"msg"`
 
-	// TraceId Request trace id.
+	// TraceId 请求 trace id。
 	TraceId *string `json:"trace_id,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Health check
+	// 健康检查
 	// (GET /healthz)
 	Healthz(c *gin.Context)
 }
@@ -98,13 +98,14 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4yST2/UMBDFv4o1cIySQG+5oYLUXlAFPYEQcu1p4rL+05lJ1W2V745sZ7dFWYme7Cjz",
-	"xu/3Zp7BRJ9iwCAMwzOwmdDrcr1AvZPpsxadvxLFhCQOa5lomcvNIhtySVwMMKwaVX+30IDsE8IALOTC",
-	"CMvSAOH97AgtDD8PbX4d6+LNHRqBpVk7fUNOMTBuHdjV13vCWxjgXffC0a0Q3SuCpQEkCnFr+QtRJGWi",
-	"xVb9QIrKow6seDYG+TWDC4IjUm7ledw2OnhVHpn1iCfwGxDSBn87e0p+PyOLKhXK2f+nV4Gqm6YGsk0y",
-	"i1y4PQF+Hr2PQV1cX18pDDZFF4QVPqbIaNXNXsmEysQgFHeKkR6cqUxOdvmFr/g4szpfC9Zun64uoYEH",
-	"JK6P9O2Hts/gMWHQycEAZ23fnkEDSctURtlNZU5P+T6i5CNPWmefl/a4VU+Q8WvGRfex7/ORLWIoMp3S",
-	"zpki7O44Gzhs9NtW5bhuJbZ/4/peE1DVbBkGz95r2r/svZnQ/Mni5W8AAAD//6PcTm5YAwAA",
+	"H4sIAAAAAAAC/4xST2sTQRT/KsvT45Bd7W1vUg/tRYr0JiLj7msyJTszzkzEtiwkxUMJVgVzMRRqqYHe",
+	"giItBL+N7Gxy8ivIzG5jy+aQ07yF93v7+3cEicik4MiNhvgIdNLBjPpxC2nXdJ5SQ92XVEKiMgyrNUNN",
+	"z08p6kQxaZjgEEMxmBSzm3J4bfuDP/1jIGAOJEIM2ijG25DnBBS+6TGFKcQvbu+8XO6J1/uYGMhJ/fvn",
+	"qKXgGpsU0prYQ4V7EMOD8L+QsFYR3pGQE0CluGhyXoy+zqfT8tvg7+8PUTC/uCq/z+zJ52J4fk8B4wbb",
+	"qNyhTLdXSP9yWsxG9vrEDqYrpRMwiib4iqVN8Hx6Y38cB34hYOk61lVqKjKkcqNpowMxvrdCdSK4UaIb",
+	"2LPTYnhhx78WZz/L8ftFf1yOroKt3d2dwH6cFJ8uay7MdN3hZ/iup4PNGrwpskzw4MnONhB4i0pXt6PW",
+	"o1bkBAuJnEoGMWy0otYGEJDUdHx8Ycdnc+jmNhr3uHSpo7edQlznfwhOddUBj3scRe5x9JF7GJWyyxIP",
+	"DPe1I3Bb4/XqsayYd+u+S5U7d1vtc9C9LKPqYFl4e9m35xN3IP8XAAD//77mgChRAwAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
