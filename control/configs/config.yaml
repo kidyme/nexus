@@ -5,6 +5,24 @@ http:
 service:
   version: "dev"
 
+mysql:
+  host: "127.0.0.1"
+  port: 3306
+  database: "nexus"
+  username: "nexus"
+  password: "nexus"
+  charset: "utf8mb4"
+  maxOpenConns: 10
+  maxIdleConns: 5
+  connMaxLifetime: "30m"
+
+recommend:
+  positiveFeedbackTypes:
+    - "like"
+    - "star"
+  readFeedbackTypes:
+    - "read"
+
 etcd:
   endpoints:
     - 127.0.0.1:2379

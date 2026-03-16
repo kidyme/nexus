@@ -8,8 +8,14 @@ package main
 
 import (
 	"github.com/kidyme/nexus/control/internal"
+	feedback2 "github.com/kidyme/nexus/control/internal/application/feedback"
+	item2 "github.com/kidyme/nexus/control/internal/application/item"
 	node2 "github.com/kidyme/nexus/control/internal/application/node"
+	user2 "github.com/kidyme/nexus/control/internal/application/user"
+	"github.com/kidyme/nexus/control/internal/infrastructure/feedback"
+	"github.com/kidyme/nexus/control/internal/infrastructure/item"
 	"github.com/kidyme/nexus/control/internal/infrastructure/node"
+	"github.com/kidyme/nexus/control/internal/infrastructure/user"
 	"github.com/kidyme/nexus/control/internal/port/http"
 )
 
@@ -29,20 +35,39 @@ func InitializeApp() (*control.App, func(), error) {
 	repository := node.NewRepository(registry)
 	service := node2.NewService(repository)
 	nodeHandler := httpport.NewNodeHandler(service)
+	db, cleanup2, err := control.ProvideMySQLDB(config)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	userRepository := user.NewRepository(db)
+	userService := user2.NewService(userRepository)
+	userHandler := httpport.NewUserHandler(userService)
+	itemRepository := item.NewRepository(db)
+	itemService := item2.NewService(itemRepository)
+	itemHandler := httpport.NewItemHandler(itemService)
+	feedbackRepository := feedback.NewRepository(db)
+	feedbackService := feedback2.NewService(feedbackRepository)
+	feedbackHandler := httpport.NewFeedbackHandler(feedbackService)
 	handlers := httpport.Handlers{
-		Common: commonHandler,
-		Node:   nodeHandler,
+		Common:   commonHandler,
+		Node:     nodeHandler,
+		User:     userHandler,
+		Item:     itemHandler,
+		Feedback: feedbackHandler,
 	}
 	engine := httpport.NewRouter(handlers)
 	httpServer := control.ProvideHTTPServer(config, engine)
 	registryNode, err := control.ProvideSelfNode(config)
 	if err != nil {
+		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
 	duration := control.ProvideHeartbeatInterval(config)
 	app := control.NewApp(httpServer, registry, registryNode, duration)
 	return app, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }

@@ -1,0 +1,596 @@
+openapi: 3.0.3
+info:
+  title: Nexus Control Item API
+  version: "0.1.0"
+  description: control 服务暴露的物品管理接口。
+tags:
+  - name: item
+    description: 物品管理接口
+paths:
+  /api/items:
+    get:
+      operationId: listItems
+      tags:
+        - item
+      summary: 查询物品列表
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          example: 20
+      responses:
+        "200":
+          description: 物品列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemPageResponse"
+              examples:
+                pagedItems:
+                  summary: 分页查询物品列表示例
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      list:
+                        - item_id: "i-100"
+                          is_hidden: false
+                          categories:
+                            - "book"
+                            - "tech"
+                          timestamp: "2026-03-13T10:00:00Z"
+                          labels:
+                            language: "go"
+                          comment: "go programming book"
+                        - item_id: "i-101"
+                          is_hidden: true
+                          categories:
+                            - "course"
+                          timestamp: "2026-03-13T11:00:00Z"
+                          labels:
+                            level: "advanced"
+                          comment: "internal training material"
+                      page: 1
+                      size: 20
+                      total: 88
+                    trace_id: "trace-item-list-001"
+    post:
+      operationId: createItems
+      tags:
+        - item
+      summary: 创建物品
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateItemsRequestBody"
+            examples:
+              singleCreate:
+                summary: 单条创建物品
+                value:
+                  item_id: "i-100"
+                  is_hidden: false
+                  categories:
+                    - "book"
+                    - "tech"
+                  timestamp: "2026-03-13T10:00:00Z"
+                  labels:
+                    language: "go"
+                  comment: "go programming book"
+              batchCreate:
+                summary: 批量创建物品
+                value:
+                  - item_id: "i-100"
+                    is_hidden: false
+                    categories:
+                      - "book"
+                      - "tech"
+                    timestamp: "2026-03-13T10:00:00Z"
+                    labels:
+                      language: "go"
+                    comment: "go programming book"
+                  - item_id: "i-101"
+                    is_hidden: true
+                    categories:
+                      - "course"
+                    timestamp: "2026-03-13T11:00:00Z"
+                    labels:
+                      level: "advanced"
+                    comment: "internal training material"
+      responses:
+        "201":
+          description: 物品创建结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateItemsResponse"
+              examples:
+                singleCreateResult:
+                  summary: 单条创建返回单个对象
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      item_id: "i-100"
+                      is_hidden: false
+                      categories:
+                        - "book"
+                        - "tech"
+                      timestamp: "2026-03-13T10:00:00Z"
+                      labels:
+                        language: "go"
+                      comment: "go programming book"
+                    trace_id: "trace-item-create-001"
+                batchCreateResult:
+                  summary: 批量创建返回对象数组
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      - item_id: "i-100"
+                        is_hidden: false
+                        categories:
+                          - "book"
+                          - "tech"
+                        timestamp: "2026-03-13T10:00:00Z"
+                        labels:
+                          language: "go"
+                        comment: "go programming book"
+                      - item_id: "i-101"
+                        is_hidden: true
+                        categories:
+                          - "course"
+                        timestamp: "2026-03-13T11:00:00Z"
+                        labels:
+                          level: "advanced"
+                        comment: "internal training material"
+                    trace_id: "trace-item-create-002"
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: patchItems
+      tags:
+        - item
+      summary: 批量更新物品
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchItemsRequestBody"
+            examples:
+              batchPatch:
+                summary: 批量更新物品
+                value:
+                  - item_id: "i-100"
+                    categories:
+                      - "book"
+                      - "backend"
+                    comment: "backend engineering book"
+                  - item_id: "i-101"
+                    is_hidden: false
+                    labels:
+                      level: "public"
+      responses:
+        "200":
+          description: 物品列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemListResponse"
+              examples:
+                batchPatchResult:
+                  summary: 批量更新后的物品列表
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      - item_id: "i-100"
+                        is_hidden: false
+                        categories:
+                          - "book"
+                          - "backend"
+                        timestamp: "2026-03-13T10:00:00Z"
+                        labels:
+                          language: "go"
+                        comment: "backend engineering book"
+                      - item_id: "i-101"
+                        is_hidden: false
+                        categories:
+                          - "course"
+                        timestamp: "2026-03-13T11:00:00Z"
+                        labels:
+                          level: "public"
+                        comment: "internal training material"
+                    trace_id: "trace-item-patch-001"
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 物品不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteItems
+      tags:
+        - item
+      summary: 批量删除物品
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteItemsRequestBody"
+            examples:
+              batchDelete:
+                summary: 批量删除物品
+                value:
+                  - "i-100"
+                  - "i-101"
+      responses:
+        "204":
+          description: 删除成功
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 物品不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/items/{item_id}:
+    get:
+      operationId: getItem
+      tags:
+        - item
+      summary: 查询物品详情
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "i-100"
+      responses:
+        "200":
+          description: 物品详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemDetailResponse"
+              examples:
+                itemDetail:
+                  summary: 单个物品详情
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      item_id: "i-100"
+                      is_hidden: false
+                      categories:
+                        - "book"
+                        - "tech"
+                      timestamp: "2026-03-13T10:00:00Z"
+                      labels:
+                        language: "go"
+                      comment: "go programming book"
+                    trace_id: "trace-item-detail-001"
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 物品不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: patchItem
+      tags:
+        - item
+      summary: 部分更新物品
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "i-100"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchItemRequest"
+            examples:
+              patchVisibility:
+                summary: 更新隐藏状态
+                value:
+                  is_hidden: true
+              patchMetadata:
+                summary: 更新分类和备注
+                value:
+                  categories:
+                    - "book"
+                    - "backend"
+                  comment: "backend engineering book"
+      responses:
+        "200":
+          description: 物品详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemDetailResponse"
+              examples:
+                patchItemResult:
+                  summary: 更新后的物品详情
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      item_id: "i-100"
+                      is_hidden: true
+                      categories:
+                        - "book"
+                        - "backend"
+                      timestamp: "2026-03-13T10:00:00Z"
+                      labels:
+                        language: "go"
+                      comment: "backend engineering book"
+                    trace_id: "trace-item-patch-002"
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 物品不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteItem
+      tags:
+        - item
+      summary: 删除物品
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "i-100"
+      responses:
+        "204":
+          description: 删除成功
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 物品不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Item:
+      type: object
+      required:
+        - item_id
+        - is_hidden
+        - categories
+        - timestamp
+      properties:
+        item_id:
+          type: string
+          description: 物品唯一标识。
+        is_hidden:
+          type: boolean
+          description: 是否对推荐结果隐藏。
+        categories:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+        labels:
+          type: object
+          additionalProperties: true
+        comment:
+          type: string
+    CreateItemRequest:
+      type: object
+      required:
+        - item_id
+      properties:
+        item_id:
+          type: string
+        is_hidden:
+          type: boolean
+        categories:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+        labels:
+          type: object
+          additionalProperties: true
+        comment:
+          type: string
+    CreateItemsRequestBody:
+      oneOf:
+        - $ref: "#/components/schemas/CreateItemRequest"
+        - type: array
+          items:
+            $ref: "#/components/schemas/CreateItemRequest"
+    CreateItemsResponse:
+      oneOf:
+        - $ref: "#/components/schemas/ItemDetailResponse"
+        - $ref: "#/components/schemas/ItemListResponse"
+    PatchItemRequest:
+      type: object
+      properties:
+        is_hidden:
+          type: boolean
+        categories:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+        labels:
+          type: object
+          additionalProperties: true
+        comment:
+          type: string
+    PatchItemBatchItem:
+      type: object
+      required:
+        - item_id
+      properties:
+        item_id:
+          type: string
+        is_hidden:
+          type: boolean
+        categories:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+        labels:
+          type: object
+          additionalProperties: true
+        comment:
+          type: string
+    PatchItemsRequestBody:
+      type: array
+      items:
+        $ref: "#/components/schemas/PatchItemBatchItem"
+    DeleteItemsRequestBody:
+      type: array
+      items:
+        type: string
+    ErrorResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+        - trace_id
+      properties:
+        errno:
+          type: integer
+        msg:
+          type: string
+        data:
+          nullable: true
+        trace_id:
+          type: string
+    ItemListResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+        - trace_id
+      properties:
+        errno:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Item"
+        trace_id:
+          type: string
+    ItemPageData:
+      type: object
+      required:
+        - list
+        - page
+        - size
+        - total
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/Item"
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+          format: int64
+    ItemPageResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+        - trace_id
+      properties:
+        errno:
+          type: integer
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/ItemPageData"
+        trace_id:
+          type: string
+    ItemDetailResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+        - trace_id
+      properties:
+        errno:
+          type: integer
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/Item"
+        trace_id:
+          type: string

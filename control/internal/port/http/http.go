@@ -8,8 +8,11 @@ import (
 
 // Handlers 汇总路由所需的 HTTP handler。
 type Handlers struct {
-	Common *CommonHandler
-	Node   *NodeHandler
+	Common   *CommonHandler
+	Node     *NodeHandler
+	User     *UserHandler
+	Item     *ItemHandler
+	Feedback *FeedbackHandler
 }
 
 // NewRouter 创建 control 的 HTTP 路由。
@@ -21,6 +24,15 @@ func NewRouter(handlers Handlers) *gin.Engine {
 	}
 	if handlers.Node != nil {
 		registerNodeRoutes(router, handlers.Node)
+	}
+	if handlers.User != nil {
+		registerUserRoutes(router, handlers.User)
+	}
+	if handlers.Item != nil {
+		registerItemRoutes(router, handlers.Item)
+	}
+	if handlers.Feedback != nil {
+		registerFeedbackRoutes(router, handlers.Feedback)
 	}
 	return router
 }

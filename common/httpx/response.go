@@ -34,6 +34,21 @@ func OK[T any](c *gin.Context, data T) {
 	})
 }
 
+// Created 写入 201 成功响应。
+func Created[T any](c *gin.Context, data T) {
+	c.JSON(http.StatusCreated, Response[T]{
+		Errno:   ErrnoOK,
+		Message: "ok",
+		Data:    data,
+		TraceID: TraceID(c),
+	})
+}
+
+// NoContent 写入 204 成功响应。
+func NoContent(c *gin.Context) {
+	c.Status(http.StatusNoContent)
+}
+
 // Fail 写入失败响应。
 func Fail(c *gin.Context, httpStatus, errno int, msg string) {
 	c.JSON(httpStatus, Response[any]{

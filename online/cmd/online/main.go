@@ -6,7 +6,7 @@ import (
 
 	"github.com/kidyme/nexus/common/config"
 	"github.com/kidyme/nexus/common/log"
-	online "github.com/kidyme/nexus/online/internal/online"
+	online "github.com/kidyme/nexus/online/internal"
 )
 
 func main() {
