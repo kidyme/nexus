@@ -1,0 +1,579 @@
+openapi: 3.0.3
+info:
+  title: Nexus Control Feedback API
+  version: "0.1.0"
+  description: control 服务暴露的反馈管理接口。
+tags:
+  - name: feedback
+    description: 反馈管理接口
+paths:
+  /api/feedback:
+    get:
+      operationId: listFeedback
+      tags:
+        - feedback
+      summary: 查询反馈列表
+      parameters:
+        - name: feedback_type
+          in: query
+          required: false
+          schema:
+            type: string
+          example: "like"
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+          example: "u-100"
+        - name: item_id
+          in: query
+          required: false
+          schema:
+            type: string
+          example: "i-100"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          example: 20
+      responses:
+        "200":
+          description: 反馈列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackPageResponse"
+              examples:
+                pagedFeedback:
+                  summary: 按条件分页查询反馈
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      list:
+                        - feedback_type: "like"
+                          user_id: "u-100"
+                          item_id: "i-100"
+                          value: 1
+                          timestamp: "2026-03-13T10:00:00Z"
+                        - feedback_type: "collect"
+                          user_id: "u-100"
+                          item_id: "i-101"
+                          value: 1
+                          timestamp: "2026-03-13T11:00:00Z"
+                      page: 1
+                      size: 20
+                      total: 42
+                    trace_id: "trace-feedback-list-001"
+    post:
+      operationId: createFeedbackCollection
+      tags:
+        - feedback
+      summary: 创建反馈
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFeedbackRequestBody"
+            examples:
+              singleCreate:
+                summary: 单条创建反馈
+                value:
+                  feedback_type: "like"
+                  user_id: "u-100"
+                  item_id: "i-100"
+                  value: 1
+                  timestamp: "2026-03-13T10:00:00Z"
+              batchCreate:
+                summary: 批量创建反馈
+                value:
+                  - feedback_type: "like"
+                    user_id: "u-100"
+                    item_id: "i-100"
+                    value: 1
+                    timestamp: "2026-03-13T10:00:00Z"
+                  - feedback_type: "collect"
+                    user_id: "u-100"
+                    item_id: "i-101"
+                    value: 1
+                    timestamp: "2026-03-13T11:00:00Z"
+      responses:
+        "201":
+          description: 反馈创建结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateFeedbackResponse"
+              examples:
+                singleCreateResult:
+                  summary: 单条创建返回单个对象
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      feedback_type: "like"
+                      user_id: "u-100"
+                      item_id: "i-100"
+                      value: 1
+                      timestamp: "2026-03-13T10:00:00Z"
+                    trace_id: "trace-feedback-create-001"
+                batchCreateResult:
+                  summary: 批量创建返回对象数组
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      - feedback_type: "like"
+                        user_id: "u-100"
+                        item_id: "i-100"
+                        value: 1
+                        timestamp: "2026-03-13T10:00:00Z"
+                      - feedback_type: "collect"
+                        user_id: "u-100"
+                        item_id: "i-101"
+                        value: 1
+                        timestamp: "2026-03-13T11:00:00Z"
+                    trace_id: "trace-feedback-create-002"
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: patchFeedbackCollection
+      tags:
+        - feedback
+      summary: 批量更新反馈
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchFeedbackCollectionRequestBody"
+            examples:
+              batchPatch:
+                summary: 批量更新反馈
+                value:
+                  - feedback_type: "like"
+                    user_id: "u-100"
+                    item_id: "i-100"
+                    value: 0
+                  - feedback_type: "collect"
+                    user_id: "u-100"
+                    item_id: "i-101"
+                    timestamp: "2026-03-13T12:00:00Z"
+      responses:
+        "200":
+          description: 反馈列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackListResponse"
+              examples:
+                batchPatchResult:
+                  summary: 批量更新后的反馈列表
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      - feedback_type: "like"
+                        user_id: "u-100"
+                        item_id: "i-100"
+                        value: 0
+                        timestamp: "2026-03-13T10:00:00Z"
+                      - feedback_type: "collect"
+                        user_id: "u-100"
+                        item_id: "i-101"
+                        value: 1
+                        timestamp: "2026-03-13T12:00:00Z"
+                    trace_id: "trace-feedback-patch-001"
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 反馈不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteFeedbackCollection
+      tags:
+        - feedback
+      summary: 批量删除反馈
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteFeedbackCollectionRequestBody"
+            examples:
+              batchDelete:
+                summary: 批量删除反馈
+                value:
+                  - feedback_type: "like"
+                    user_id: "u-100"
+                    item_id: "i-100"
+                  - feedback_type: "collect"
+                    user_id: "u-100"
+                    item_id: "i-101"
+      responses:
+        "204":
+          description: 删除成功
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 反馈不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/feedback/{feedback_type}/{user_id}/{item_id}:
+    get:
+      operationId: getFeedback
+      tags:
+        - feedback
+      summary: 查询反馈详情
+      parameters:
+        - $ref: "#/components/parameters/FeedbackType"
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ItemID"
+      responses:
+        "200":
+          description: 反馈详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackDetailResponse"
+              examples:
+                feedbackDetail:
+                  summary: 单条反馈详情
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      feedback_type: "like"
+                      user_id: "u-100"
+                      item_id: "i-100"
+                      value: 1
+                      timestamp: "2026-03-13T10:00:00Z"
+                    trace_id: "trace-feedback-detail-001"
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 反馈不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: patchFeedback
+      tags:
+        - feedback
+      summary: 部分更新反馈
+      parameters:
+        - $ref: "#/components/parameters/FeedbackType"
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ItemID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchFeedbackRequest"
+            examples:
+              patchValue:
+                summary: 只更新反馈值
+                value:
+                  value: 0
+              patchTimestamp:
+                summary: 只更新时间戳
+                value:
+                  timestamp: "2026-03-13T12:00:00Z"
+      responses:
+        "200":
+          description: 反馈详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackDetailResponse"
+              examples:
+                patchFeedbackResult:
+                  summary: 更新后的反馈详情
+                  value:
+                    errno: 0
+                    msg: ok
+                    data:
+                      feedback_type: "like"
+                      user_id: "u-100"
+                      item_id: "i-100"
+                      value: 0
+                      timestamp: "2026-03-13T12:00:00Z"
+                    trace_id: "trace-feedback-patch-002"
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 反馈不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteFeedback
+      tags:
+        - feedback
+      summary: 删除反馈
+      parameters:
+        - $ref: "#/components/parameters/FeedbackType"
+        - $ref: "#/components/parameters/UserID"
+        - $ref: "#/components/parameters/ItemID"
+      responses:
+        "204":
+          description: 删除成功
+        "400":
+          description: 非法请求
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 反馈不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  parameters:
+    FeedbackType:
+      name: feedback_type
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "like"
+    UserID:
+      name: user_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "u-100"
+    ItemID:
+      name: item_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "i-100"
+  schemas:
+    FeedbackKey:
+      type: object
+      required:
+        - feedback_type
+        - user_id
+        - item_id
+      properties:
+        feedback_type:
+          type: string
+        user_id:
+          type: string
+        item_id:
+          type: string
+    Feedback:
+      type: object
+      required:
+        - feedback_type
+        - user_id
+        - item_id
+        - value
+        - timestamp
+      properties:
+        feedback_type:
+          type: string
+        user_id:
+          type: string
+        item_id:
+          type: string
+        value:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
+    CreateFeedbackRequest:
+      type: object
+      required:
+        - feedback_type
+        - user_id
+        - item_id
+      properties:
+        feedback_type:
+          type: string
+        user_id:
+          type: string
+        item_id:
+          type: string
+        value:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
+    CreateFeedbackRequestBody:
+      oneOf:
+        - $ref: "#/components/schemas/CreateFeedbackRequest"
+        - type: array
+          items:
+            $ref: "#/components/schemas/CreateFeedbackRequest"
+    CreateFeedbackResponse:
+      oneOf:
+        - $ref: "#/components/schemas/FeedbackDetailResponse"
+        - $ref: "#/components/schemas/FeedbackListResponse"
+    PatchFeedbackRequest:
+      type: object
+      properties:
+        value:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
+    PatchFeedbackCollectionItem:
+      type: object
+      required:
+        - feedback_type
+        - user_id
+        - item_id
+      properties:
+        feedback_type:
+          type: string
+        user_id:
+          type: string
+        item_id:
+          type: string
+        value:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
+    PatchFeedbackCollectionRequestBody:
+      type: array
+      items:
+        $ref: "#/components/schemas/PatchFeedbackCollectionItem"
+    DeleteFeedbackCollectionRequestBody:
+      type: array
+      items:
+        $ref: "#/components/schemas/FeedbackKey"
+    ErrorResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+        - trace_id
+      properties:
+        errno:
+          type: integer
+        msg:
+          type: string
+        data:
+          nullable: true
+        trace_id:
+          type: string
+    FeedbackListResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+        - trace_id
+      properties:
+        errno:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feedback"
+        trace_id:
+          type: string
+    FeedbackPageData:
+      type: object
+      required:
+        - list
+        - page
+        - size
+        - total
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feedback"
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+          format: int64
+    FeedbackPageResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+        - trace_id
+      properties:
+        errno:
+          type: integer
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/FeedbackPageData"
+        trace_id:
+          type: string
+    FeedbackDetailResponse:
+      type: object
+      required:
+        - errno
+        - msg
+        - data
+        - trace_id
+      properties:
+        errno:
+          type: integer
+        msg:
+          type: string
+        data:
+          $ref: "#/components/schemas/Feedback"
+        trace_id:
+          type: string

@@ -6,9 +6,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kidyme/nexus/common/httpx"
+	feedbackapp "github.com/kidyme/nexus/control/internal/application/feedback"
+	itemapp "github.com/kidyme/nexus/control/internal/application/item"
 	"github.com/kidyme/nexus/common/registry"
 	nodeapp "github.com/kidyme/nexus/control/internal/application/node"
+	userapp "github.com/kidyme/nexus/control/internal/application/user"
+	feedbackdomain "github.com/kidyme/nexus/control/internal/domain/feedback"
+	itemdomain "github.com/kidyme/nexus/control/internal/domain/item"
 	nodedomain "github.com/kidyme/nexus/control/internal/domain/node"
+	userdomain "github.com/kidyme/nexus/control/internal/domain/user"
 	nodegen "github.com/kidyme/nexus/control/internal/port/http/gen/node"
 )
 
@@ -80,6 +86,28 @@ func writeError(c *gin.Context, err error) {
 	case errors.Is(err, nodeapp.ErrServiceNameRequired), errors.Is(err, nodeapp.ErrNodeIDRequired):
 		status = 400
 		errno = httpx.ErrnoBadRequest
+	case errors.Is(err, userapp.ErrInvalidPage),
+		errors.Is(err, userapp.ErrInvalidSize),
+		errors.Is(err, itemapp.ErrInvalidPage),
+		errors.Is(err, itemapp.ErrInvalidSize),
+		errors.Is(err, feedbackapp.ErrInvalidPage),
+		errors.Is(err, feedbackapp.ErrInvalidSize),
+		errors.Is(err, errPageMustBePositive),
+		errors.Is(err, errSizeMustBePositive):
+		status = 400
+		errno = httpx.ErrnoBadRequest
+	case errors.Is(err, userdomain.ErrUserIDRequired),
+		errors.Is(err, itemdomain.ErrItemIDRequired),
+		errors.Is(err, feedbackdomain.ErrFeedbackTypeRequired),
+		errors.Is(err, feedbackdomain.ErrUserIDRequired),
+		errors.Is(err, feedbackdomain.ErrItemIDRequired):
+		status = 400
+		errno = httpx.ErrnoBadRequest
+	case errors.Is(err, userdomain.ErrUserNotFound),
+		errors.Is(err, itemdomain.ErrItemNotFound),
+		errors.Is(err, feedbackdomain.ErrFeedbackNotFound):
+		status = 404
+		errno = httpx.ErrnoNotFound
 	case errors.Is(err, registry.ErrNodeNotFound):
 		status = 404
 		errno = httpx.ErrnoNotFound

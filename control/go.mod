@@ -4,6 +4,7 @@ go 1.24.2
 
 require (
 	github.com/getkin/kin-openapi v0.133.0
+	github.com/go-sql-driver/mysql v1.9.3
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
 	github.com/kidyme/nexus/common v0.0.0
@@ -11,6 +12,7 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect

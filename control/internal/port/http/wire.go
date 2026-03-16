@@ -6,6 +6,9 @@ import "github.com/google/wire"
 var ProviderSet = wire.NewSet(
 	NewCommonHandler,
 	NewNodeHandler,
+	NewUserHandler,
+	NewItemHandler,
+	NewFeedbackHandler,
 	wire.Struct(new(Handlers), "*"),
 	NewRouter,
 )

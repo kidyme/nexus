@@ -1,6 +1,7 @@
 package control
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -11,12 +12,14 @@ import (
 	"github.com/kidyme/nexus/common/registry"
 	commonserver "github.com/kidyme/nexus/common/server"
 	controlconfig "github.com/kidyme/nexus/control/config"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // ProviderSet 提供 control 运行时依赖。
 var ProviderSet = wire.NewSet(
 	ProvideConfig,
 	ProvideRegistry,
+	ProvideMySQLDB,
 	ProvideSelfNode,
 	ProvideHeartbeatInterval,
 	ProvideHTTPServer,
@@ -40,6 +43,37 @@ func ProvideRegistry(cfg *controlconfig.Config) (registry.Registry, func(), erro
 		}
 	}
 	return nodeRegistry, cleanup, nil
+}
+
+// ProvideMySQLDB 创建 MySQL 连接及其清理函数。
+func ProvideMySQLDB(cfg *controlconfig.Config) (*sql.DB, func(), error) {
+	db, err := sql.Open("mysql", cfg.MySQL.DSN())
+	if err != nil {
+		return nil, nil, err
+	}
+	if cfg.MySQL.MaxOpenConns > 0 {
+		db.SetMaxOpenConns(cfg.MySQL.MaxOpenConns)
+	}
+	if cfg.MySQL.MaxIdleConns > 0 {
+		db.SetMaxIdleConns(cfg.MySQL.MaxIdleConns)
+	}
+	if cfg.MySQL.ConnMaxLifetime != "" {
+		d, err := time.ParseDuration(cfg.MySQL.ConnMaxLifetime)
+		if err != nil {
+			_ = db.Close()
+			return nil, nil, err
+		}
+		db.SetConnMaxLifetime(d)
+	}
+	if err := db.Ping(); err != nil {
+		_ = db.Close()
+		return nil, nil, err
+	}
+	return db, func() {
+		if err := db.Close(); err != nil {
+			log.Error("关闭 mysql 连接失败", "error", err)
+		}
+	}, nil
 }
 
 // ProvideSelfNode 创建当前 control 节点的注册元信息。
