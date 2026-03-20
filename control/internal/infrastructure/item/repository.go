@@ -76,7 +76,7 @@ func (r *Repository) UpdateBatch(ctx context.Context, items []itemdomain.Item) e
 			return err
 		}
 
-		result, err := tx.ExecContext(ctx,
+		_, err = tx.ExecContext(ctx,
 			`UPDATE items SET is_hidden = ?, categories = ?, timestamp = ?, labels = ?, comment = ? WHERE item_id = ?`,
 			item.IsHidden,
 			nullableJSON(categories),
@@ -86,9 +86,6 @@ func (r *Repository) UpdateBatch(ctx context.Context, items []itemdomain.Item) e
 			item.ItemID,
 		)
 		if err != nil {
-			return err
-		}
-		if err := expectRows(result, itemdomain.ErrItemNotFound); err != nil {
 			return err
 		}
 	}
@@ -232,17 +229,6 @@ func nullableJSON(data []byte) any {
 		return nil
 	}
 	return data
-}
-
-func expectRows(result sql.Result, notFound error) error {
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if affected == 0 {
-		return notFound
-	}
-	return nil
 }
 
 func uniqueStrings(values []string) []string {
