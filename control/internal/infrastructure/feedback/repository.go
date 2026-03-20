@@ -66,7 +66,7 @@ func (r *Repository) UpdateBatch(ctx context.Context, feedbacks []feedbackdomain
 	}()
 
 	for _, feedback := range feedbacks {
-		result, err := tx.ExecContext(ctx,
+		_, err := tx.ExecContext(ctx,
 			`UPDATE feedback SET value = ?, timestamp = ? WHERE feedback_type = ? AND user_id = ? AND item_id = ?`,
 			feedback.Value,
 			feedback.Timestamp,
@@ -75,9 +75,6 @@ func (r *Repository) UpdateBatch(ctx context.Context, feedbacks []feedbackdomain
 			feedback.ItemID,
 		)
 		if err != nil {
-			return err
-		}
-		if err := expectRows(result, feedbackdomain.ErrFeedbackNotFound); err != nil {
 			return err
 		}
 	}
@@ -237,17 +234,6 @@ func (r *Repository) ListPage(ctx context.Context, filter feedbackdomain.Filter,
 		feedbacks = append(feedbacks, feedback)
 	}
 	return feedbacks, total, rows.Err()
-}
-
-func expectRows(result sql.Result, notFound error) error {
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if affected == 0 {
-		return notFound
-	}
-	return nil
 }
 
 func uniqueFeedbackKeys(keys []feedbackdomain.Key) []feedbackdomain.Key {

@@ -65,16 +65,13 @@ func (r *Repository) UpdateBatch(ctx context.Context, users []userdomain.User) e
 	}()
 
 	for _, user := range users {
-		result, err := tx.ExecContext(ctx,
+		_, err := tx.ExecContext(ctx,
 			`UPDATE users SET labels = ?, comment = ? WHERE user_id = ?`,
 			nullableJSON(user.Labels),
 			user.Comment,
 			user.UserID,
 		)
 		if err != nil {
-			return err
-		}
-		if err := expectRows(result, userdomain.ErrUserNotFound); err != nil {
 			return err
 		}
 	}
@@ -200,17 +197,6 @@ func nullableJSON(data []byte) any {
 		return nil
 	}
 	return data
-}
-
-func expectRows(result sql.Result, notFound error) error {
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if affected == 0 {
-		return notFound
-	}
-	return nil
 }
 
 func uniqueStrings(values []string) []string {

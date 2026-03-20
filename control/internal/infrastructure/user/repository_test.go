@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"io"
 	"sync"
 	"testing"
 
@@ -115,24 +114,10 @@ func (stubStmt) Exec([]driver.Value) (driver.Result, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 func (stubStmt) Query([]driver.Value) (driver.Rows, error) { return nil, fmt.Errorf("not implemented") }
-func (stubStmt) QueryContext(context.Context, []driver.NamedValue) (driver.Rows, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-func (stubStmt) ExecContext(context.Context, []driver.NamedValue) (driver.Result, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-func (stubStmt) ColumnConverter(int) driver.ValueConverter { return driver.DefaultParameterConverter }
 
-type stubRows struct{}
-
-func (stubRows) Columns() []string         { return nil }
-func (stubRows) Close() error              { return nil }
-func (stubRows) Next([]driver.Value) error { return io.EOF }
-
-func TestUpdateBatchRollsBackOnNotFound(t *testing.T) {
+func TestUpdateBatchAllowsNoopUpdate(t *testing.T) {
 	state := &stubState{
 		execResults: []stubExecResult{
-			{rowsAffected: 1},
 			{rowsAffected: 0},
 		},
 	}
@@ -140,13 +125,31 @@ func TestUpdateBatchRollsBackOnNotFound(t *testing.T) {
 
 	err := repo.UpdateBatch(context.Background(), []userdomain.User{
 		{UserID: "u-1"},
-		{UserID: "u-2"},
 	})
-	if err != userdomain.ErrUserNotFound {
-		t.Fatalf("expected ErrUserNotFound, got %v", err)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
 	}
 	if state.beginCalls != 1 {
 		t.Fatalf("expected BeginTx to be called once, got %d", state.beginCalls)
+	}
+	if state.commitCalls != 1 {
+		t.Fatalf("expected Commit to be called once, got %d", state.commitCalls)
+	}
+}
+
+func TestUpdateBatchRollsBackOnExecError(t *testing.T) {
+	state := &stubState{
+		execResults: []stubExecResult{
+			{err: fmt.Errorf("boom")},
+		},
+	}
+	repo := NewRepository(openStubDB(t, state))
+
+	err := repo.UpdateBatch(context.Background(), []userdomain.User{
+		{UserID: "u-1"},
+	})
+	if err == nil {
+		t.Fatal("expected update error")
 	}
 	if state.commitCalls != 0 {
 		t.Fatalf("expected Commit not to be called, got %d", state.commitCalls)

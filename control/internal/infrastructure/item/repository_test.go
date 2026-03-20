@@ -115,10 +115,9 @@ func (stubStmt) Exec([]driver.Value) (driver.Result, error) {
 }
 func (stubStmt) Query([]driver.Value) (driver.Rows, error) { return nil, fmt.Errorf("not implemented") }
 
-func TestUpdateBatchRollsBackOnNotFound(t *testing.T) {
+func TestUpdateBatchAllowsNoopUpdate(t *testing.T) {
 	state := &stubState{
 		execResults: []stubExecResult{
-			{rowsAffected: 1},
 			{rowsAffected: 0},
 		},
 	}
@@ -126,13 +125,31 @@ func TestUpdateBatchRollsBackOnNotFound(t *testing.T) {
 
 	err := repo.UpdateBatch(context.Background(), []itemdomain.Item{
 		{ItemID: "i-1"},
-		{ItemID: "i-2"},
 	})
-	if err != itemdomain.ErrItemNotFound {
-		t.Fatalf("expected ErrItemNotFound, got %v", err)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
 	}
 	if state.beginCalls != 1 {
 		t.Fatalf("expected BeginTx to be called once, got %d", state.beginCalls)
+	}
+	if state.commitCalls != 1 {
+		t.Fatalf("expected Commit to be called once, got %d", state.commitCalls)
+	}
+}
+
+func TestUpdateBatchRollsBackOnExecError(t *testing.T) {
+	state := &stubState{
+		execResults: []stubExecResult{
+			{err: fmt.Errorf("boom")},
+		},
+	}
+	repo := NewRepository(openStubDB(t, state))
+
+	err := repo.UpdateBatch(context.Background(), []itemdomain.Item{
+		{ItemID: "i-1"},
+	})
+	if err == nil {
+		t.Fatal("expected update error")
 	}
 	if state.commitCalls != 0 {
 		t.Fatalf("expected Commit not to be called, got %d", state.commitCalls)
