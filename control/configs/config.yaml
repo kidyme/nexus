@@ -16,6 +16,14 @@ mysql:
   maxIdleConns: 5
   connMaxLifetime: "30m"
 
+redis:
+  addr: "127.0.0.1:6379"
+  password: ""
+  db: 0
+  dialTimeout: "3s"
+  readTimeout: "3s"
+  writeTimeout: "3s"
+
 recommend:
   positiveFeedbackTypes:
     - "like"

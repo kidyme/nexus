@@ -8,6 +8,7 @@ import (
 	"time"
 
 	feedbackdomain "github.com/kidyme/nexus/control/internal/domain/feedback"
+	refreshmetadomain "github.com/kidyme/nexus/control/internal/domain/refreshmeta"
 )
 
 var ErrInvalidPage = errors.New("feedback application: page must be greater than 0")
@@ -15,12 +16,13 @@ var ErrInvalidSize = errors.New("feedback application: size must be greater than
 
 // Service 编排反馈用例。
 type Service struct {
-	repository feedbackdomain.Repository
+	repository  feedbackdomain.Repository
+	refreshMeta refreshmetadomain.Repository
 }
 
 // NewService 创建反馈应用服务。
-func NewService(repository feedbackdomain.Repository) *Service {
-	return &Service{repository: repository}
+func NewService(repository feedbackdomain.Repository, refreshMeta refreshmetadomain.Repository) *Service {
+	return &Service{repository: repository, refreshMeta: refreshMeta}
 }
 
 // Create 创建反馈。
@@ -39,7 +41,10 @@ func (s *Service) CreateBatch(ctx context.Context, feedbacks []feedbackdomain.Fe
 			return err
 		}
 	}
-	return s.repository.CreateBatch(ctx, feedbacks)
+	if err := s.repository.CreateBatch(ctx, feedbacks); err != nil {
+		return err
+	}
+	return s.touchRelatedEntities(ctx, feedbacks)
 }
 
 // Update 更新反馈。
@@ -58,7 +63,10 @@ func (s *Service) UpdateBatch(ctx context.Context, feedbacks []feedbackdomain.Fe
 			return err
 		}
 	}
-	return s.repository.UpdateBatch(ctx, feedbacks)
+	if err := s.repository.UpdateBatch(ctx, feedbacks); err != nil {
+		return err
+	}
+	return s.touchRelatedEntities(ctx, feedbacks)
 }
 
 // Delete 删除反馈。
@@ -128,4 +136,21 @@ func normalizeKey(key feedbackdomain.Key) feedbackdomain.Key {
 	key.UserID = strings.TrimSpace(key.UserID)
 	key.ItemID = strings.TrimSpace(key.ItemID)
 	return key
+}
+
+func (s *Service) touchRelatedEntities(ctx context.Context, feedbacks []feedbackdomain.Feedback) error {
+	userIDs := make([]string, 0, len(feedbacks))
+	itemIDs := make([]string, 0, len(feedbacks))
+	for _, feedback := range feedbacks {
+		if feedback.UserID != "" {
+			userIDs = append(userIDs, feedback.UserID)
+		}
+		if feedback.ItemID != "" {
+			itemIDs = append(itemIDs, feedback.ItemID)
+		}
+	}
+	if err := s.refreshMeta.TouchUsers(ctx, userIDs); err != nil {
+		return err
+	}
+	return s.refreshMeta.TouchItems(ctx, itemIDs)
 }

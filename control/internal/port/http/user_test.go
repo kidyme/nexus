@@ -11,6 +11,12 @@ import (
 	userdomain "github.com/kidyme/nexus/control/internal/domain/user"
 )
 
+type fakeHTTPRefreshMetaRepository struct{}
+
+func (f *fakeHTTPRefreshMetaRepository) TouchUsers(context.Context, []string) error { return nil }
+
+func (f *fakeHTTPRefreshMetaRepository) TouchItems(context.Context, []string) error { return nil }
+
 type fakeHTTPUserRepository struct {
 	createFn      func(context.Context, userdomain.User) error
 	createBatchFn func(context.Context, []userdomain.User) error
@@ -91,7 +97,7 @@ func TestCreateUsersSingleRoute(t *testing.T) {
 		findFn: func(_ context.Context, userID string) (*userdomain.User, error) {
 			return &userdomain.User{UserID: userID, Comment: "ok"}, nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(`{"user_id":"u-1","comment":"ok"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -117,7 +123,7 @@ func TestCreateUsersBatchRoute(t *testing.T) {
 			}
 			return nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(`[{"user_id":"u-1"},{"user_id":"u-2"}]`))
 	req.Header.Set("Content-Type", "application/json")
@@ -148,7 +154,7 @@ func TestPatchUserRoute(t *testing.T) {
 			comment = users[0].Comment
 			return nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodPatch, "/api/users/u-1", strings.NewReader(`{"comment":"new"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -171,7 +177,7 @@ func TestDeleteUsersRoute(t *testing.T) {
 			}
 			return nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/users", strings.NewReader(`["u-1","u-2"]`))
 	req.Header.Set("Content-Type", "application/json")
@@ -191,7 +197,7 @@ func TestListUsersRouteWithPagination(t *testing.T) {
 			}
 			return []userdomain.User{{UserID: "u-1", Comment: "ok"}}, 135, nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/users?page=2&size=5", nil)
 	rec := httptest.NewRecorder()
@@ -210,7 +216,7 @@ func TestListUsersRouteWithPagination(t *testing.T) {
 }
 
 func TestListUsersRouteRejectsInvalidPagination(t *testing.T) {
-	router := NewRouter(Handlers{User: NewUserHandler(userapp.NewService(&fakeHTTPUserRepository{}))})
+	router := NewRouter(Handlers{User: NewUserHandler(userapp.NewService(&fakeHTTPUserRepository{}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/users?page=0&size=20", nil)
 	rec := httptest.NewRecorder()

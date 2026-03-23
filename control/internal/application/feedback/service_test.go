@@ -7,6 +7,25 @@ import (
 	feedbackdomain "github.com/kidyme/nexus/control/internal/domain/feedback"
 )
 
+type fakeRefreshMetaRepository struct {
+	touchUsersFn func(context.Context, []string) error
+	touchItemsFn func(context.Context, []string) error
+}
+
+func (f *fakeRefreshMetaRepository) TouchUsers(ctx context.Context, userIDs []string) error {
+	if f.touchUsersFn == nil {
+		return nil
+	}
+	return f.touchUsersFn(ctx, userIDs)
+}
+
+func (f *fakeRefreshMetaRepository) TouchItems(ctx context.Context, itemIDs []string) error {
+	if f.touchItemsFn == nil {
+		return nil
+	}
+	return f.touchItemsFn(ctx, itemIDs)
+}
+
 type fakeFeedbackRepository struct {
 	createFn      func(context.Context, feedbackdomain.Feedback) error
 	createBatchFn func(context.Context, []feedbackdomain.Feedback) error
@@ -83,7 +102,7 @@ func (f *fakeFeedbackRepository) ListPage(ctx context.Context, filter feedbackdo
 }
 
 func TestDeleteRequiresCompositeKey(t *testing.T) {
-	service := NewService(&fakeFeedbackRepository{})
+	service := NewService(&fakeFeedbackRepository{}, &fakeRefreshMetaRepository{})
 
 	err := service.Delete(context.Background(), "", "u-1", "i-1")
 	if err != feedbackdomain.ErrFeedbackTypeRequired {
@@ -102,7 +121,7 @@ func TestDeleteBatchNormalizesCompositeKey(t *testing.T) {
 			}
 			return nil
 		},
-	})
+	}, &fakeRefreshMetaRepository{})
 
 	if err := service.DeleteBatch(context.Background(), []feedbackdomain.Key{{
 		FeedbackType: " like ",
@@ -114,12 +133,43 @@ func TestDeleteBatchNormalizesCompositeKey(t *testing.T) {
 }
 
 func TestListPageValidatesPagination(t *testing.T) {
-	service := NewService(&fakeFeedbackRepository{})
+	service := NewService(&fakeFeedbackRepository{}, &fakeRefreshMetaRepository{})
 
 	if _, _, err := service.ListPage(context.Background(), feedbackdomain.Filter{}, 0, 20); err != ErrInvalidPage {
 		t.Fatalf("expected ErrInvalidPage, got %v", err)
 	}
 	if _, _, err := service.ListPage(context.Background(), feedbackdomain.Filter{}, 1, 0); err != ErrInvalidSize {
 		t.Fatalf("expected ErrInvalidSize, got %v", err)
+	}
+}
+
+func TestCreateBatchTouchesUsersAndItems(t *testing.T) {
+	service := NewService(&fakeFeedbackRepository{
+		createBatchFn: func(_ context.Context, feedbacks []feedbackdomain.Feedback) error {
+			if len(feedbacks) != 2 {
+				t.Fatalf("expected 2 feedbacks, got %d", len(feedbacks))
+			}
+			return nil
+		},
+	}, &fakeRefreshMetaRepository{
+		touchUsersFn: func(_ context.Context, userIDs []string) error {
+			if len(userIDs) != 2 || userIDs[0] != "u-1" || userIDs[1] != "u-2" {
+				t.Fatalf("expected touched users [u-1 u-2], got %#v", userIDs)
+			}
+			return nil
+		},
+		touchItemsFn: func(_ context.Context, itemIDs []string) error {
+			if len(itemIDs) != 2 || itemIDs[0] != "i-1" || itemIDs[1] != "i-2" {
+				t.Fatalf("expected touched items [i-1 i-2], got %#v", itemIDs)
+			}
+			return nil
+		},
+	})
+
+	if err := service.CreateBatch(context.Background(), []feedbackdomain.Feedback{
+		{FeedbackType: "like", UserID: "u-1", ItemID: "i-1"},
+		{FeedbackType: "star", UserID: "u-2", ItemID: "i-2"},
+	}); err != nil {
+		t.Fatalf("create batch feedback: %v", err)
 	}
 }

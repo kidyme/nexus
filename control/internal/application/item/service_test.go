@@ -7,6 +7,25 @@ import (
 	itemdomain "github.com/kidyme/nexus/control/internal/domain/item"
 )
 
+type fakeRefreshMetaRepository struct {
+	touchUsersFn func(context.Context, []string) error
+	touchItemsFn func(context.Context, []string) error
+}
+
+func (f *fakeRefreshMetaRepository) TouchUsers(ctx context.Context, userIDs []string) error {
+	if f.touchUsersFn == nil {
+		return nil
+	}
+	return f.touchUsersFn(ctx, userIDs)
+}
+
+func (f *fakeRefreshMetaRepository) TouchItems(ctx context.Context, itemIDs []string) error {
+	if f.touchItemsFn == nil {
+		return nil
+	}
+	return f.touchItemsFn(ctx, itemIDs)
+}
+
 type fakeItemRepository struct {
 	createFn      func(context.Context, itemdomain.Item) error
 	createBatchFn func(context.Context, []itemdomain.Item) error
@@ -90,7 +109,7 @@ func TestCreateDefaultsTimestamp(t *testing.T) {
 			}
 			return nil
 		},
-	})
+	}, &fakeRefreshMetaRepository{})
 
 	if err := service.Create(context.Background(), itemdomain.Item{ItemID: "i-1"}); err != nil {
 		t.Fatalf("create item: %v", err)
@@ -110,7 +129,7 @@ func TestCreateBatchDefaultsTimestamp(t *testing.T) {
 			}
 			return nil
 		},
-	})
+	}, &fakeRefreshMetaRepository{})
 
 	if err := service.CreateBatch(context.Background(), []itemdomain.Item{
 		{ItemID: "i-1"},
@@ -121,12 +140,37 @@ func TestCreateBatchDefaultsTimestamp(t *testing.T) {
 }
 
 func TestListPageValidatesPagination(t *testing.T) {
-	service := NewService(&fakeItemRepository{})
+	service := NewService(&fakeItemRepository{}, &fakeRefreshMetaRepository{})
 
 	if _, _, err := service.ListPage(context.Background(), 0, 20); err != ErrInvalidPage {
 		t.Fatalf("expected ErrInvalidPage, got %v", err)
 	}
 	if _, _, err := service.ListPage(context.Background(), 1, 0); err != ErrInvalidSize {
 		t.Fatalf("expected ErrInvalidSize, got %v", err)
+	}
+}
+
+func TestCreateBatchTouchesItems(t *testing.T) {
+	service := NewService(&fakeItemRepository{
+		createBatchFn: func(_ context.Context, items []itemdomain.Item) error {
+			if len(items) != 2 {
+				t.Fatalf("expected 2 items, got %d", len(items))
+			}
+			return nil
+		},
+	}, &fakeRefreshMetaRepository{
+		touchItemsFn: func(_ context.Context, itemIDs []string) error {
+			if len(itemIDs) != 2 || itemIDs[0] != "i-1" || itemIDs[1] != "i-2" {
+				t.Fatalf("expected touched items [i-1 i-2], got %#v", itemIDs)
+			}
+			return nil
+		},
+	})
+
+	if err := service.CreateBatch(context.Background(), []itemdomain.Item{
+		{ItemID: "i-1"},
+		{ItemID: "i-2"},
+	}); err != nil {
+		t.Fatalf("create batch items: %v", err)
 	}
 }

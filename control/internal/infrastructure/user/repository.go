@@ -211,3 +211,12 @@ func uniqueStrings(values []string) []string {
 	}
 	return result
 }
+
+func ensureUserExists(ctx context.Context, tx *sql.Tx, userID string) error {
+	var marker int
+	err := tx.QueryRowContext(ctx, `SELECT 1 FROM users WHERE user_id = ?`, userID).Scan(&marker)
+	if errors.Is(err, sql.ErrNoRows) {
+		return userdomain.ErrUserNotFound
+	}
+	return err
+}

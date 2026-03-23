@@ -6,14 +6,15 @@ package main
 
 import (
 	"github.com/google/wire"
+	control "github.com/kidyme/nexus/control/internal"
 	feedbackapp "github.com/kidyme/nexus/control/internal/application/feedback"
 	itemapp "github.com/kidyme/nexus/control/internal/application/item"
-	control "github.com/kidyme/nexus/control/internal"
 	nodeapp "github.com/kidyme/nexus/control/internal/application/node"
 	userapp "github.com/kidyme/nexus/control/internal/application/user"
 	feedbackinfra "github.com/kidyme/nexus/control/internal/infrastructure/feedback"
 	iteminfra "github.com/kidyme/nexus/control/internal/infrastructure/item"
 	nodeinfra "github.com/kidyme/nexus/control/internal/infrastructure/node"
+	refreshmetainfra "github.com/kidyme/nexus/control/internal/infrastructure/refreshmeta"
 	userinfra "github.com/kidyme/nexus/control/internal/infrastructure/user"
 	httpport "github.com/kidyme/nexus/control/internal/port/http"
 )
@@ -24,6 +25,7 @@ func InitializeApp() (*control.App, func(), error) {
 		control.ProviderSet,
 		nodeinfra.ProviderSet,
 		nodeapp.ProviderSet,
+		refreshmetainfra.ProviderSet,
 		userinfra.ProviderSet,
 		userapp.ProviderSet,
 		iteminfra.ProviderSet,

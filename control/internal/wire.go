@@ -1,18 +1,20 @@
 package control
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/google/wire"
 	"github.com/kidyme/nexus/common/log"
+	"github.com/kidyme/nexus/common/redisx"
 	"github.com/kidyme/nexus/common/registry"
 	commonserver "github.com/kidyme/nexus/common/server"
 	controlconfig "github.com/kidyme/nexus/control/config"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 // ProviderSet 提供 control 运行时依赖。
@@ -20,6 +22,7 @@ var ProviderSet = wire.NewSet(
 	ProvideConfig,
 	ProvideRegistry,
 	ProvideMySQLDB,
+	ProvideRedisClient,
 	ProvideSelfNode,
 	ProvideHeartbeatInterval,
 	ProvideHTTPServer,
@@ -74,6 +77,35 @@ func ProvideMySQLDB(cfg *controlconfig.Config) (*sql.DB, func(), error) {
 			log.Error("关闭 mysql 连接失败", "error", err)
 		}
 	}, nil
+}
+
+// ProvideRedisClient 创建 Redis 客户端。
+func ProvideRedisClient(cfg *controlconfig.Config) (*redisx.Client, error) {
+	dialTimeout, err := time.ParseDuration(cfg.Redis.DialTimeout)
+	if err != nil {
+		return nil, err
+	}
+	readTimeout, err := time.ParseDuration(cfg.Redis.ReadTimeout)
+	if err != nil {
+		return nil, err
+	}
+	writeTimeout, err := time.ParseDuration(cfg.Redis.WriteTimeout)
+	if err != nil {
+		return nil, err
+	}
+
+	client := redisx.NewClient(redisx.Options{
+		Addr:         cfg.Redis.Addr,
+		Password:     cfg.Redis.Password,
+		DB:           cfg.Redis.DB,
+		DialTimeout:  dialTimeout,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+	})
+	if err := client.Ping(context.Background()); err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 // ProvideSelfNode 创建当前 control 节点的注册元信息。

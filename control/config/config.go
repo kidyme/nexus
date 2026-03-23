@@ -12,6 +12,7 @@ type Config struct {
 	HTTP      HTTPConfig      `mapstructure:"http"`
 	Service   ServiceConfig   `mapstructure:"service"`
 	MySQL     MySQLConfig     `mapstructure:"mysql"`
+	Redis     RedisConfig     `mapstructure:"redis"`
 	Recommend RecommendConfig `mapstructure:"recommend"`
 	ETCD      registry.Config `mapstructure:"etcd"`
 }
@@ -38,6 +39,16 @@ type MySQLConfig struct {
 	MaxOpenConns    int    `mapstructure:"maxOpenConns"`
 	MaxIdleConns    int    `mapstructure:"maxIdleConns"`
 	ConnMaxLifetime string `mapstructure:"connMaxLifetime"`
+}
+
+// RedisConfig 定义 Redis 连接配置。
+type RedisConfig struct {
+	Addr         string `mapstructure:"addr"`
+	Password     string `mapstructure:"password"`
+	DB           int    `mapstructure:"db"`
+	DialTimeout  string `mapstructure:"dialTimeout"`
+	ReadTimeout  string `mapstructure:"readTimeout"`
+	WriteTimeout string `mapstructure:"writeTimeout"`
 }
 
 // RecommendConfig 定义推荐语义相关配置。
@@ -77,6 +88,13 @@ func Load() (*Config, error) {
 			MaxOpenConns:    10,
 			MaxIdleConns:    5,
 			ConnMaxLifetime: "30m",
+		},
+		Redis: RedisConfig{
+			Addr:         "127.0.0.1:6379",
+			DB:           0,
+			DialTimeout:  "3s",
+			ReadTimeout:  "3s",
+			WriteTimeout: "3s",
 		},
 		Recommend: RecommendConfig{
 			PositiveFeedbackTypes: []string{"like", "star"},
