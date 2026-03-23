@@ -101,7 +101,7 @@ func TestListFeedbackRoute(t *testing.T) {
 				{FeedbackType: "like", UserID: "u-1", ItemID: "i-1", Timestamp: now, Value: 1},
 			}, 135, nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/feedback?user_id=u-1", nil)
 	rec := httptest.NewRecorder()
@@ -134,7 +134,7 @@ func TestPatchFeedbackCollectionRoute(t *testing.T) {
 			}
 			return nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodPatch, "/api/feedback", strings.NewReader(`[{"feedback_type":"like","user_id":"u-1","item_id":"i-1","value":2}]`))
 	req.Header.Set("Content-Type", "application/json")
@@ -160,7 +160,7 @@ func TestDeleteFeedbackCollectionRoute(t *testing.T) {
 			}
 			return nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/feedback", strings.NewReader(`[{"feedback_type":"like","user_id":"u-1","item_id":"i-1"}]`))
 	req.Header.Set("Content-Type", "application/json")
@@ -173,7 +173,7 @@ func TestDeleteFeedbackCollectionRoute(t *testing.T) {
 }
 
 func TestListFeedbackRouteRejectsInvalidPagination(t *testing.T) {
-	router := NewRouter(Handlers{Feedback: NewFeedbackHandler(feedbackapp.NewService(&fakeHTTPFeedbackRepository{}))})
+	router := NewRouter(Handlers{Feedback: NewFeedbackHandler(feedbackapp.NewService(&fakeHTTPFeedbackRepository{}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/feedback?page=0&size=20", nil)
 	rec := httptest.NewRecorder()

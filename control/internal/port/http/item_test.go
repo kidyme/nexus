@@ -91,7 +91,7 @@ func TestGetItemRouteNotFound(t *testing.T) {
 		findFn: func(context.Context, string) (*itemdomain.Item, error) {
 			return nil, itemdomain.ErrItemNotFound
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/items/missing", nil)
 	rec := httptest.NewRecorder()
@@ -116,7 +116,7 @@ func TestPatchItemsRoute(t *testing.T) {
 			}
 			return nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodPatch, "/api/items", strings.NewReader(`[{"item_id":"i-1","comment":"new"}]`))
 	req.Header.Set("Content-Type", "application/json")
@@ -139,7 +139,7 @@ func TestDeleteItemsRoute(t *testing.T) {
 			}
 			return nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/items", strings.NewReader(`["i-1","i-2"]`))
 	req.Header.Set("Content-Type", "application/json")
@@ -159,7 +159,7 @@ func TestListItemsRouteWithPagination(t *testing.T) {
 			}
 			return []itemdomain.Item{{ItemID: "i-1", Comment: "ok"}}, 88, nil
 		},
-	}))})
+	}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/items?page=3&size=10", nil)
 	rec := httptest.NewRecorder()
@@ -178,7 +178,7 @@ func TestListItemsRouteWithPagination(t *testing.T) {
 }
 
 func TestListItemsRouteRejectsInvalidPagination(t *testing.T) {
-	router := NewRouter(Handlers{Item: NewItemHandler(itemapp.NewService(&fakeHTTPItemRepository{}))})
+	router := NewRouter(Handlers{Item: NewItemHandler(itemapp.NewService(&fakeHTTPItemRepository{}, &fakeHTTPRefreshMetaRepository{}))})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/items?page=1&size=0", nil)
 	rec := httptest.NewRecorder()

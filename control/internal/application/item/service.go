@@ -8,6 +8,7 @@ import (
 	"time"
 
 	itemdomain "github.com/kidyme/nexus/control/internal/domain/item"
+	refreshmetadomain "github.com/kidyme/nexus/control/internal/domain/refreshmeta"
 )
 
 var ErrInvalidPage = errors.New("item application: page must be greater than 0")
@@ -15,12 +16,13 @@ var ErrInvalidSize = errors.New("item application: size must be greater than 0")
 
 // Service 编排物品用例。
 type Service struct {
-	repository itemdomain.Repository
+	repository  itemdomain.Repository
+	refreshMeta refreshmetadomain.Repository
 }
 
 // NewService 创建物品应用服务。
-func NewService(repository itemdomain.Repository) *Service {
-	return &Service{repository: repository}
+func NewService(repository itemdomain.Repository, refreshMeta refreshmetadomain.Repository) *Service {
+	return &Service{repository: repository, refreshMeta: refreshMeta}
 }
 
 // Create 创建物品。
@@ -39,7 +41,10 @@ func (s *Service) CreateBatch(ctx context.Context, items []itemdomain.Item) erro
 			return err
 		}
 	}
-	return s.repository.CreateBatch(ctx, items)
+	if err := s.repository.CreateBatch(ctx, items); err != nil {
+		return err
+	}
+	return s.refreshMeta.TouchItems(ctx, collectItemIDs(items))
 }
 
 // Update 更新物品。
@@ -58,7 +63,10 @@ func (s *Service) UpdateBatch(ctx context.Context, items []itemdomain.Item) erro
 			return err
 		}
 	}
-	return s.repository.UpdateBatch(ctx, items)
+	if err := s.repository.UpdateBatch(ctx, items); err != nil {
+		return err
+	}
+	return s.refreshMeta.TouchItems(ctx, collectItemIDs(items))
 }
 
 // Delete 删除物品。
@@ -100,4 +108,14 @@ func (s *Service) ListPage(ctx context.Context, page, size int) ([]itemdomain.It
 		return nil, 0, ErrInvalidSize
 	}
 	return s.repository.ListPage(ctx, page, size)
+}
+
+func collectItemIDs(items []itemdomain.Item) []string {
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		if item.ItemID != "" {
+			result = append(result, item.ItemID)
+		}
+	}
+	return result
 }

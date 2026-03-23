@@ -15,6 +15,7 @@ import (
 	"github.com/kidyme/nexus/control/internal/infrastructure/feedback"
 	"github.com/kidyme/nexus/control/internal/infrastructure/item"
 	"github.com/kidyme/nexus/control/internal/infrastructure/node"
+	refreshmeta "github.com/kidyme/nexus/control/internal/infrastructure/refreshmeta"
 	"github.com/kidyme/nexus/control/internal/infrastructure/user"
 	"github.com/kidyme/nexus/control/internal/port/http"
 )
@@ -40,14 +41,21 @@ func InitializeApp() (*control.App, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
+	client, err := control.ProvideRedisClient(config)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	refreshMetaRepository := refreshmeta.NewRepository(client)
 	userRepository := user.NewRepository(db)
-	userService := user2.NewService(userRepository)
+	userService := user2.NewService(userRepository, refreshMetaRepository)
 	userHandler := httpport.NewUserHandler(userService)
 	itemRepository := item.NewRepository(db)
-	itemService := item2.NewService(itemRepository)
+	itemService := item2.NewService(itemRepository, refreshMetaRepository)
 	itemHandler := httpport.NewItemHandler(itemService)
 	feedbackRepository := feedback.NewRepository(db)
-	feedbackService := feedback2.NewService(feedbackRepository)
+	feedbackService := feedback2.NewService(feedbackRepository, refreshMetaRepository)
 	feedbackHandler := httpport.NewFeedbackHandler(feedbackService)
 	handlers := httpport.Handlers{
 		Common:   commonHandler,

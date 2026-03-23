@@ -17,11 +17,18 @@ type stubExecResult struct {
 }
 
 type stubState struct {
-	execResults   []stubExecResult
-	execArgCounts []int
-	beginCalls    int
-	commitCalls   int
-	rollbackCalls int
+	execResults    []stubExecResult
+	execArgCounts  []int
+	queryResults   []stubQueryResult
+	queryArgCounts []int
+	beginCalls     int
+	commitCalls    int
+	rollbackCalls  int
+}
+
+type stubQueryResult struct {
+	hasRow bool
+	err    error
 }
 
 type stubDriver struct{}
@@ -93,6 +100,22 @@ func (c *stubConn) ExecContext(_ context.Context, _ string, args []driver.NamedV
 	return stubResult{rowsAffected: result.rowsAffected}, nil
 }
 
+func (c *stubConn) QueryContext(_ context.Context, _ string, args []driver.NamedValue) (driver.Rows, error) {
+	c.state.queryArgCounts = append(c.state.queryArgCounts, len(args))
+	if len(c.state.queryResults) == 0 {
+		return nil, fmt.Errorf("no stub query result configured")
+	}
+	result := c.state.queryResults[0]
+	c.state.queryResults = c.state.queryResults[1:]
+	if result.err != nil {
+		return nil, result.err
+	}
+	if !result.hasRow {
+		return stubRows{}, nil
+	}
+	return stubRows{values: [][]driver.Value{{int64(1)}}}, nil
+}
+
 func (t stubTx) Commit() error {
 	t.state.commitCalls++
 	return nil
@@ -117,6 +140,10 @@ func (stubStmt) Query([]driver.Value) (driver.Rows, error) { return nil, fmt.Err
 
 func TestUpdateBatchAllowsNoopUpdate(t *testing.T) {
 	state := &stubState{
+		queryResults: []stubQueryResult{
+			{hasRow: true},
+			{hasRow: false},
+		},
 		execResults: []stubExecResult{
 			{rowsAffected: 0},
 		},
@@ -156,6 +183,28 @@ func TestUpdateBatchRollsBackOnExecError(t *testing.T) {
 	}
 	if state.rollbackCalls != 1 {
 		t.Fatalf("expected Rollback to be called once, got %d", state.rollbackCalls)
+	}
+}
+
+func TestUpdateBatchAllowsNoopUpdateWhenUserExists(t *testing.T) {
+	state := &stubState{
+		queryResults: []stubQueryResult{
+			{hasRow: true},
+		},
+		execResults: []stubExecResult{
+			{rowsAffected: 0},
+		},
+	}
+	repo := NewRepository(openStubDB(t, state))
+
+	err := repo.UpdateBatch(context.Background(), []userdomain.User{
+		{UserID: "u-1"},
+	})
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if state.commitCalls != 1 {
+		t.Fatalf("expected Commit to be called once, got %d", state.commitCalls)
 	}
 }
 

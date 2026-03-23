@@ -7,6 +7,25 @@ import (
 	userdomain "github.com/kidyme/nexus/control/internal/domain/user"
 )
 
+type fakeRefreshMetaRepository struct {
+	touchUsersFn func(context.Context, []string) error
+	touchItemsFn func(context.Context, []string) error
+}
+
+func (f *fakeRefreshMetaRepository) TouchUsers(ctx context.Context, userIDs []string) error {
+	if f.touchUsersFn == nil {
+		return nil
+	}
+	return f.touchUsersFn(ctx, userIDs)
+}
+
+func (f *fakeRefreshMetaRepository) TouchItems(ctx context.Context, itemIDs []string) error {
+	if f.touchItemsFn == nil {
+		return nil
+	}
+	return f.touchItemsFn(ctx, itemIDs)
+}
+
 type fakeUserRepository struct {
 	createFn      func(context.Context, userdomain.User) error
 	createBatchFn func(context.Context, []userdomain.User) error
@@ -90,7 +109,7 @@ func TestCreateTrimsUserID(t *testing.T) {
 			}
 			return nil
 		},
-	})
+	}, &fakeRefreshMetaRepository{})
 
 	if err := service.Create(context.Background(), userdomain.User{UserID: "  u-1  "}); err != nil {
 		t.Fatalf("create user: %v", err)
@@ -108,7 +127,7 @@ func TestCreateBatchTrimsUserIDs(t *testing.T) {
 			}
 			return nil
 		},
-	})
+	}, &fakeRefreshMetaRepository{})
 
 	if err := service.CreateBatch(context.Background(), []userdomain.User{
 		{UserID: "  u-1  "},
@@ -119,12 +138,37 @@ func TestCreateBatchTrimsUserIDs(t *testing.T) {
 }
 
 func TestListPageValidatesPagination(t *testing.T) {
-	service := NewService(&fakeUserRepository{})
+	service := NewService(&fakeUserRepository{}, &fakeRefreshMetaRepository{})
 
 	if _, _, err := service.ListPage(context.Background(), 0, 20); err != ErrInvalidPage {
 		t.Fatalf("expected ErrInvalidPage, got %v", err)
 	}
 	if _, _, err := service.ListPage(context.Background(), 1, 0); err != ErrInvalidSize {
 		t.Fatalf("expected ErrInvalidSize, got %v", err)
+	}
+}
+
+func TestCreateBatchTouchesUsers(t *testing.T) {
+	service := NewService(&fakeUserRepository{
+		createBatchFn: func(_ context.Context, users []userdomain.User) error {
+			if len(users) != 2 {
+				t.Fatalf("expected 2 users, got %d", len(users))
+			}
+			return nil
+		},
+	}, &fakeRefreshMetaRepository{
+		touchUsersFn: func(_ context.Context, userIDs []string) error {
+			if len(userIDs) != 2 || userIDs[0] != "u-1" || userIDs[1] != "u-2" {
+				t.Fatalf("expected touched users [u-1 u-2], got %#v", userIDs)
+			}
+			return nil
+		},
+	})
+
+	if err := service.CreateBatch(context.Background(), []userdomain.User{
+		{UserID: "u-1"},
+		{UserID: "u-2"},
+	}); err != nil {
+		t.Fatalf("create batch users: %v", err)
 	}
 }

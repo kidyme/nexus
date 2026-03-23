@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 
+	refreshmetadomain "github.com/kidyme/nexus/control/internal/domain/refreshmeta"
 	userdomain "github.com/kidyme/nexus/control/internal/domain/user"
 )
 
@@ -14,12 +15,13 @@ var ErrInvalidSize = errors.New("user application: size must be greater than 0")
 
 // Service 编排用户用例。
 type Service struct {
-	repository userdomain.Repository
+	repository  userdomain.Repository
+	refreshMeta refreshmetadomain.Repository
 }
 
 // NewService 创建用户应用服务。
-func NewService(repository userdomain.Repository) *Service {
-	return &Service{repository: repository}
+func NewService(repository userdomain.Repository, refreshMeta refreshmetadomain.Repository) *Service {
+	return &Service{repository: repository, refreshMeta: refreshMeta}
 }
 
 // Create 创建用户。
@@ -35,7 +37,10 @@ func (s *Service) CreateBatch(ctx context.Context, users []userdomain.User) erro
 			return err
 		}
 	}
-	return s.repository.CreateBatch(ctx, users)
+	if err := s.repository.CreateBatch(ctx, users); err != nil {
+		return err
+	}
+	return s.refreshMeta.TouchUsers(ctx, collectUserIDs(users))
 }
 
 // Update 更新用户。
@@ -51,7 +56,10 @@ func (s *Service) UpdateBatch(ctx context.Context, users []userdomain.User) erro
 			return err
 		}
 	}
-	return s.repository.UpdateBatch(ctx, users)
+	if err := s.repository.UpdateBatch(ctx, users); err != nil {
+		return err
+	}
+	return s.refreshMeta.TouchUsers(ctx, collectUserIDs(users))
 }
 
 // Delete 删除用户。
@@ -93,4 +101,14 @@ func (s *Service) ListPage(ctx context.Context, page, size int) ([]userdomain.Us
 		return nil, 0, ErrInvalidSize
 	}
 	return s.repository.ListPage(ctx, page, size)
+}
+
+func collectUserIDs(users []userdomain.User) []string {
+	result := make([]string, 0, len(users))
+	for _, user := range users {
+		if user.UserID != "" {
+			result = append(result, user.UserID)
+		}
+	}
+	return result
 }
