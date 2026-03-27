@@ -69,6 +69,18 @@ func (c *Client) Set(ctx context.Context, key, value string) error {
 	return err
 }
 
+// Get 读取单个字符串值。
+func (c *Client) Get(ctx context.Context, key string) (string, error) {
+	replies, err := c.exec(ctx, command{name: "GET", args: []string{key}})
+	if err != nil {
+		return "", err
+	}
+	if len(replies) == 0 {
+		return "", nil
+	}
+	return replies[0], nil
+}
+
 // SetMany 批量写入多个字符串值。
 func (c *Client) SetMany(ctx context.Context, values map[string]string) error {
 	if len(values) == 0 {

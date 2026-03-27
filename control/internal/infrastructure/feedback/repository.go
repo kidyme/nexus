@@ -66,7 +66,7 @@ func (r *Repository) UpdateBatch(ctx context.Context, feedbacks []feedbackdomain
 	}()
 
 	for _, feedback := range feedbacks {
-		_, err := tx.ExecContext(ctx,
+		_, err = tx.ExecContext(ctx,
 			`UPDATE feedback SET value = ?, timestamp = ? WHERE feedback_type = ? AND user_id = ? AND item_id = ?`,
 			feedback.Value,
 			feedback.Timestamp,
@@ -268,16 +268,4 @@ func buildFilterQuery(filter feedbackdomain.Filter) (string, []any) {
 	}
 
 	return query, args
-}
-
-func ensureFeedbackExists(ctx context.Context, tx *sql.Tx, feedbackType, userID, itemID string) error {
-	var marker int
-	err := tx.QueryRowContext(ctx,
-		`SELECT 1 FROM feedback WHERE feedback_type = ? AND user_id = ? AND item_id = ?`,
-		feedbackType, userID, itemID,
-	).Scan(&marker)
-	if errors.Is(err, sql.ErrNoRows) {
-		return feedbackdomain.ErrFeedbackNotFound
-	}
-	return err
 }

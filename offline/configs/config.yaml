@@ -1,0 +1,43 @@
+service:
+  version: "dev"
+
+mysql:
+  host: "127.0.0.1"
+  port: 3306
+  database: "nexus"
+  username: "nexus"
+  password: "nexus"
+  charset: "utf8mb4"
+  maxOpenConns: 10
+  maxIdleConns: 5
+  connMaxLifetime: "30m"
+
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  password: ""
+  db: 0
+  dialTimeout: "3s"
+  readTimeout: "3s"
+  writeTimeout: "3s"
+
+worker:
+  tickInterval: "1m"
+
+recommend:
+  cacheSize: 100
+  cacheExpire: "10s"
+  activeUserTTL: "720h"
+  positiveFeedbackTypes:
+    - "like"
+    - "star"
+  recallers:
+    - name: "popular"
+      enabled: true
+      quota: 1
+    - name: "latest"
+      enabled: true
+      quota: 1
+
+training:
+  backend: "cpu"

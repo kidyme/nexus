@@ -65,13 +65,16 @@ func (r *Repository) UpdateBatch(ctx context.Context, users []userdomain.User) e
 	}()
 
 	for _, user := range users {
-		_, err := tx.ExecContext(ctx,
+		result, err := tx.ExecContext(ctx,
 			`UPDATE users SET labels = ?, comment = ? WHERE user_id = ?`,
 			nullableJSON(user.Labels),
 			user.Comment,
 			user.UserID,
 		)
 		if err != nil {
+			return err
+		}
+		if err := expectRows(result, userdomain.ErrUserNotFound); err != nil {
 			return err
 		}
 	}
@@ -199,6 +202,17 @@ func nullableJSON(data []byte) any {
 	return data
 }
 
+func expectRows(result sql.Result, notFound error) error {
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return notFound
+	}
+	return nil
+}
+
 func uniqueStrings(values []string) []string {
 	seen := make(map[string]struct{}, len(values))
 	result := make([]string, 0, len(values))
@@ -210,13 +224,4 @@ func uniqueStrings(values []string) []string {
 		result = append(result, value)
 	}
 	return result
-}
-
-func ensureUserExists(ctx context.Context, tx *sql.Tx, userID string) error {
-	var marker int
-	err := tx.QueryRowContext(ctx, `SELECT 1 FROM users WHERE user_id = ?`, userID).Scan(&marker)
-	if errors.Is(err, sql.ErrNoRows) {
-		return userdomain.ErrUserNotFound
-	}
-	return err
 }

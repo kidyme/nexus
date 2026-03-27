@@ -2,7 +2,10 @@
 package config
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -43,6 +46,21 @@ func Load(configPath, configName string) (*viper.Viper, error) {
 		return nil, err
 	}
 	return v, nil
+}
+
+// LoadFromCaller 基于调用方源码目录加载配置，避免依赖当前工作目录。
+func LoadFromCaller(configPath, configName string) (*viper.Viper, error) {
+	_, callerFile, _, ok := runtime.Caller(1)
+	if !ok {
+		return nil, fmt.Errorf("resolve caller path: runtime caller unavailable")
+	}
+
+	resolvedPath := configPath
+	if resolvedPath != "" && !filepath.IsAbs(resolvedPath) {
+		resolvedPath = filepath.Clean(filepath.Join(filepath.Dir(callerFile), "..", resolvedPath))
+	}
+
+	return Load(resolvedPath, configName)
 }
 
 // LoadServiceConfigInto 加载当前服务模块配置并解码到 target。

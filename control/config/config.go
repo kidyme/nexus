@@ -101,7 +101,7 @@ func Load() (*Config, error) {
 			ReadFeedbackTypes:     []string{"read"},
 		},
 	}
-	v, err := commonconfig.Load("configs", "config")
+	v, err := commonconfig.LoadFromCaller("configs", "config")
 	if err != nil {
 		return nil, err
 	}

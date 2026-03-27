@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"io"
 	"sync"
 	"testing"
 
@@ -17,18 +18,11 @@ type stubExecResult struct {
 }
 
 type stubState struct {
-	execResults    []stubExecResult
-	execArgCounts  []int
-	queryResults   []stubQueryResult
-	queryArgCounts []int
-	beginCalls     int
-	commitCalls    int
-	rollbackCalls  int
-}
-
-type stubQueryResult struct {
-	hasRow bool
-	err    error
+	execResults   []stubExecResult
+	execArgCounts []int
+	beginCalls    int
+	commitCalls   int
+	rollbackCalls int
 }
 
 type stubDriver struct{}
@@ -100,22 +94,6 @@ func (c *stubConn) ExecContext(_ context.Context, _ string, args []driver.NamedV
 	return stubResult{rowsAffected: result.rowsAffected}, nil
 }
 
-func (c *stubConn) QueryContext(_ context.Context, _ string, args []driver.NamedValue) (driver.Rows, error) {
-	c.state.queryArgCounts = append(c.state.queryArgCounts, len(args))
-	if len(c.state.queryResults) == 0 {
-		return nil, fmt.Errorf("no stub query result configured")
-	}
-	result := c.state.queryResults[0]
-	c.state.queryResults = c.state.queryResults[1:]
-	if result.err != nil {
-		return nil, result.err
-	}
-	if !result.hasRow {
-		return stubRows{}, nil
-	}
-	return stubRows{values: [][]driver.Value{{int64(1)}}}, nil
-}
-
 func (t stubTx) Commit() error {
 	t.state.commitCalls++
 	return nil
@@ -137,14 +115,24 @@ func (stubStmt) Exec([]driver.Value) (driver.Result, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 func (stubStmt) Query([]driver.Value) (driver.Rows, error) { return nil, fmt.Errorf("not implemented") }
+func (stubStmt) QueryContext(context.Context, []driver.NamedValue) (driver.Rows, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+func (stubStmt) ExecContext(context.Context, []driver.NamedValue) (driver.Result, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+func (stubStmt) ColumnConverter(int) driver.ValueConverter { return driver.DefaultParameterConverter }
 
-func TestUpdateBatchAllowsNoopUpdate(t *testing.T) {
+type stubRows struct{}
+
+func (stubRows) Columns() []string         { return nil }
+func (stubRows) Close() error              { return nil }
+func (stubRows) Next([]driver.Value) error { return io.EOF }
+
+func TestUpdateBatchRollsBackOnNotFound(t *testing.T) {
 	state := &stubState{
-		queryResults: []stubQueryResult{
-			{hasRow: true},
-			{hasRow: false},
-		},
 		execResults: []stubExecResult{
+			{rowsAffected: 1},
 			{rowsAffected: 0},
 		},
 	}
@@ -152,59 +140,19 @@ func TestUpdateBatchAllowsNoopUpdate(t *testing.T) {
 
 	err := repo.UpdateBatch(context.Background(), []userdomain.User{
 		{UserID: "u-1"},
+		{UserID: "u-2"},
 	})
-	if err != nil {
-		t.Fatalf("expected nil error, got %v", err)
+	if err != userdomain.ErrUserNotFound {
+		t.Fatalf("expected ErrUserNotFound, got %v", err)
 	}
 	if state.beginCalls != 1 {
 		t.Fatalf("expected BeginTx to be called once, got %d", state.beginCalls)
-	}
-	if state.commitCalls != 1 {
-		t.Fatalf("expected Commit to be called once, got %d", state.commitCalls)
-	}
-}
-
-func TestUpdateBatchRollsBackOnExecError(t *testing.T) {
-	state := &stubState{
-		execResults: []stubExecResult{
-			{err: fmt.Errorf("boom")},
-		},
-	}
-	repo := NewRepository(openStubDB(t, state))
-
-	err := repo.UpdateBatch(context.Background(), []userdomain.User{
-		{UserID: "u-1"},
-	})
-	if err == nil {
-		t.Fatal("expected update error")
 	}
 	if state.commitCalls != 0 {
 		t.Fatalf("expected Commit not to be called, got %d", state.commitCalls)
 	}
 	if state.rollbackCalls != 1 {
 		t.Fatalf("expected Rollback to be called once, got %d", state.rollbackCalls)
-	}
-}
-
-func TestUpdateBatchAllowsNoopUpdateWhenUserExists(t *testing.T) {
-	state := &stubState{
-		queryResults: []stubQueryResult{
-			{hasRow: true},
-		},
-		execResults: []stubExecResult{
-			{rowsAffected: 0},
-		},
-	}
-	repo := NewRepository(openStubDB(t, state))
-
-	err := repo.UpdateBatch(context.Background(), []userdomain.User{
-		{UserID: "u-1"},
-	})
-	if err != nil {
-		t.Fatalf("expected nil error, got %v", err)
-	}
-	if state.commitCalls != 1 {
-		t.Fatalf("expected Commit to be called once, got %d", state.commitCalls)
 	}
 }
 

@@ -71,9 +71,6 @@ func (r *Repository) UpdateBatch(ctx context.Context, items []itemdomain.Item) e
 	}()
 
 	for _, item := range items {
-		if err := ensureItemExists(ctx, tx, item.ItemID); err != nil {
-			return err
-		}
 		categories, err := json.Marshal(item.Categories)
 		if err != nil {
 			return err
@@ -245,13 +242,4 @@ func uniqueStrings(values []string) []string {
 		result = append(result, value)
 	}
 	return result
-}
-
-func ensureItemExists(ctx context.Context, tx *sql.Tx, itemID string) error {
-	var marker int
-	err := tx.QueryRowContext(ctx, `SELECT 1 FROM items WHERE item_id = ?`, itemID).Scan(&marker)
-	if errors.Is(err, sql.ErrNoRows) {
-		return itemdomain.ErrItemNotFound
-	}
-	return err
 }
