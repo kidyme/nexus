@@ -16,6 +16,7 @@ import (
 	recdomain "github.com/kidyme/nexus/offline/internal/domain/recommendation"
 	recinfra "github.com/kidyme/nexus/offline/internal/infrastructure/recommendation"
 	userinfra "github.com/kidyme/nexus/offline/internal/infrastructure/user"
+	"github.com/kidyme/nexus/offline/internal/recallkey"
 )
 
 // Run 启动 offline 服务的内部逻辑。
@@ -101,11 +102,11 @@ func provideRedis(cfg *offlineconfig.Config) (*redisx.Client, error) {
 
 func buildRecallers(cfg *offlineconfig.Config, source *recinfra.SourceRepository) ([]recdomain.Recaller, error) {
 	registry := recapp.NewRegistry()
-	registry.Register(recallerapp.RecallerPopular, func() recdomain.Recaller {
+	registry.Register(recallkey.RecallerPopular, func() recdomain.Recaller {
 		return recallerapp.NewPopularRecaller(source, cfg.Recommend)
 	})
-	registry.Register(recallerapp.RecallerLatest, func() recdomain.Recaller {
+	registry.Register(recallkey.RecallerLatest, func() recdomain.Recaller {
 		return recallerapp.NewLatestRecaller(source, cfg.Recommend)
 	})
-	return registry.Build(cfg.Recommend.EnabledRecallerNames())
+	return registry.Build(cfg.Recommend.EnabledRecallerKeys())
 }

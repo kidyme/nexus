@@ -91,7 +91,7 @@ func (s *Service) recall(ctx context.Context, user userdomain.User, now time.Tim
 	if limit <= 0 {
 		limit = 100
 	}
-	configuredRecallers := s.config.RecallersByNames(recallerNames(s.recallers))
+	configuredRecallers := s.config.RecallersByKeys(recallerKeys(s.recallers))
 
 	seen := make(map[string]struct{}, limit)
 	result := make([]recdomain.Candidate, 0, limit)
@@ -160,10 +160,10 @@ func isActiveUser(now time.Time, modifyTime time.Time, ttl time.Duration) bool {
 	return modifyTime.After(now.Add(-ttl))
 }
 
-func recallerNames(recallers []recdomain.Recaller) []string {
-	names := make([]string, 0, len(recallers))
+func recallerKeys(recallers []recdomain.Recaller) []string {
+	keys := make([]string, 0, len(recallers))
 	for _, recaller := range recallers {
-		names = append(names, recaller.Name())
+		keys = append(keys, recaller.Name())
 	}
-	return names
+	return keys
 }

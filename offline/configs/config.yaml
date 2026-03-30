@@ -32,10 +32,12 @@ recommend:
     - "like"
     - "star"
   recallers:
-    - name: "popular"
+    - category: "non_personal"
+      name: "popular"
       enabled: true
       quota: 1
-    - name: "latest"
+    - category: "non_personal"
+      name: "latest"
       enabled: true
       quota: 1
 

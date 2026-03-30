@@ -4,6 +4,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/kidyme/nexus/offline/internal/recallkey"
 )
 
 func TestConfigValidateRejectsMissingRequiredFields(t *testing.T) {
@@ -43,7 +45,7 @@ func TestConfigValidateAcceptsCompleteConfig(t *testing.T) {
 			ActiveUserTTL:         "720h",
 			PositiveFeedbackTypes: []string{"like", "star"},
 			Recallers: []RecallerConfig{
-				{Name: "popular", Enabled: true, Quota: 1},
+				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NamePopular, Enabled: true, Quota: 1},
 			},
 		},
 		Training: TrainingConfig{
@@ -85,8 +87,8 @@ func TestConfigValidateRejectsDuplicateRecallerNames(t *testing.T) {
 			ActiveUserTTL:         "720h",
 			PositiveFeedbackTypes: []string{"like", "star"},
 			Recallers: []RecallerConfig{
-				{Name: "popular", Enabled: true, Quota: 1},
-				{Name: "popular", Enabled: true, Quota: 2},
+				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NamePopular, Enabled: true, Quota: 1},
+				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NamePopular, Enabled: true, Quota: 2},
 			},
 		},
 		Training: TrainingConfig{
@@ -97,7 +99,7 @@ func TestConfigValidateRejectsDuplicateRecallerNames(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected duplicate recaller validation error")
 	}
-	if !strings.Contains(err.Error(), `duplicate recommend.recallers name "popular"`) {
+	if !strings.Contains(err.Error(), `duplicate recommend.recallers key "non_personal/popular"`) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

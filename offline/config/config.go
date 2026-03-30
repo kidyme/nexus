@@ -11,6 +11,7 @@ import (
 	"time"
 
 	commonconfig "github.com/kidyme/nexus/common/config"
+	"github.com/kidyme/nexus/offline/internal/recallkey"
 )
 
 // Config 定义 offline 运行时配置。
@@ -80,9 +81,15 @@ type WorkerConfig struct {
 
 // RecallerConfig 定义单个召回器配置。
 type RecallerConfig struct {
-	Name    string `mapstructure:"name"`
-	Enabled bool   `mapstructure:"enabled"`
-	Quota   int    `mapstructure:"quota"`
+	Category string `mapstructure:"category"`
+	Name     string `mapstructure:"name"`
+	Enabled  bool   `mapstructure:"enabled"`
+	Quota    int    `mapstructure:"quota"`
+}
+
+// Key 返回召回器唯一标识。
+func (c RecallerConfig) Key() string {
+	return recallkey.Key(c.Category, c.Name)
 }
 
 // RecommendConfig 定义离线推荐配置。
@@ -113,28 +120,28 @@ func (c RecommendConfig) EnabledRecallers() []RecallerConfig {
 	return result
 }
 
-// EnabledRecallerNames 返回启用召回器名称列表。
-func (c RecommendConfig) EnabledRecallerNames() []string {
+// EnabledRecallerKeys 返回启用召回器标识列表。
+func (c RecommendConfig) EnabledRecallerKeys() []string {
 	recallers := c.EnabledRecallers()
-	names := make([]string, 0, len(recallers))
+	keys := make([]string, 0, len(recallers))
 	for _, recaller := range recallers {
-		names = append(names, recaller.Name)
+		keys = append(keys, recaller.Key())
 	}
-	return names
+	return keys
 }
 
-// RecallersByNames 返回指定名称列表对应的启用召回器配置，顺序与 names 一致。
-func (c RecommendConfig) RecallersByNames(names []string) []RecallerConfig {
-	if len(names) == 0 {
+// RecallersByKeys 返回指定标识列表对应的启用召回器配置，顺序与 keys 一致。
+func (c RecommendConfig) RecallersByKeys(keys []string) []RecallerConfig {
+	if len(keys) == 0 {
 		return nil
 	}
 	enabled := make(map[string]RecallerConfig, len(c.Recallers))
 	for _, recaller := range c.EnabledRecallers() {
-		enabled[recaller.Name] = recaller
+		enabled[recaller.Key()] = recaller
 	}
-	result := make([]RecallerConfig, 0, len(names))
-	for _, name := range names {
-		recaller, ok := enabled[name]
+	result := make([]RecallerConfig, 0, len(keys))
+	for _, key := range keys {
+		recaller, ok := enabled[key]
 		if !ok {
 			continue
 		}
@@ -183,10 +190,10 @@ func AllocateRecallerQuotas(total int, recallers []RecallerConfig) map[string]in
 		if quota > remaining {
 			quota = remaining
 		}
-		result[recaller.Name] = quota
+		result[recaller.Key()] = quota
 		remaining -= quota
 		remainders = append(remainders, remainder{
-			name:  recaller.Name,
+			name:  recaller.Key(),
 			value: numerator % totalWeight,
 		})
 	}
@@ -215,7 +222,7 @@ func AllocateRecallerQuotas(total int, recallers []RecallerConfig) map[string]in
 	targetNames := make([]string, 0, len(recallers))
 	for _, recaller := range recallers {
 		if recaller.Quota > 0 {
-			targetNames = append(targetNames, recaller.Name)
+			targetNames = append(targetNames, recaller.Key())
 		}
 	}
 	for i := 0; remaining > 0 && len(targetNames) > 0; i++ {
@@ -323,12 +330,35 @@ func (c *Config) Validate() error {
 	}
 	seenRecallers := make(map[string]struct{}, len(c.Recommend.EnabledRecallers()))
 	for _, recaller := range c.Recommend.EnabledRecallers() {
-		if _, ok := seenRecallers[recaller.Name]; ok {
-			return fmt.Errorf("offline config: duplicate recommend.recallers name %q", recaller.Name)
+		if strings.TrimSpace(recaller.Category) == "" {
+			return errors.New("offline config: recommend.recallers.category is required")
 		}
-		seenRecallers[recaller.Name] = struct{}{}
+		if strings.TrimSpace(recaller.Name) == "" {
+			return errors.New("offline config: recommend.recallers.name is required")
+		}
+		switch recaller.Category {
+		case recallkey.CategoryNonPersonal:
+			if recaller.Name != recallkey.NameLatest && recaller.Name != recallkey.NamePopular {
+				return fmt.Errorf("offline config: unsupported non_personal recaller %q", recaller.Name)
+			}
+		case recallkey.CategoryCF:
+			switch recaller.Name {
+			case recallkey.NameUserToUser, recallkey.NameItemToItem, recallkey.NameMF:
+			default:
+				return fmt.Errorf("offline config: unsupported cf recaller %q", recaller.Name)
+			}
+		case recallkey.CategoryExternal:
+			// external 支持自定义名称，由具体适配器决定如何绑定。
+		default:
+			return fmt.Errorf("offline config: unsupported recaller category %q", recaller.Category)
+		}
+		key := recaller.Key()
+		if _, ok := seenRecallers[key]; ok {
+			return fmt.Errorf("offline config: duplicate recommend.recallers key %q", key)
+		}
+		seenRecallers[key] = struct{}{}
 		if recaller.Quota <= 0 {
-			return fmt.Errorf("offline config: recommend.recallers[%s].quota must be greater than 0", recaller.Name)
+			return fmt.Errorf("offline config: recommend.recallers[%s].quota must be greater than 0", key)
 		}
 	}
 

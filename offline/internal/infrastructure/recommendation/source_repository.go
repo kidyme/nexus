@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	recdomain "github.com/kidyme/nexus/offline/internal/domain/recommendation"
+	"github.com/kidyme/nexus/offline/internal/recallkey"
 )
 
 // SourceRepository 是基于 MySQL 的召回源数据仓储实现。
@@ -44,7 +45,7 @@ func (r *SourceRepository) ListPopularItems(ctx context.Context, feedbackTypes [
 		if err := rows.Scan(&candidate.ItemID, &candidate.Score); err != nil {
 			return nil, err
 		}
-		candidate.Source = "popular"
+		candidate.Source = recallkey.RecallerPopular
 		result = append(result, candidate)
 	}
 	return result, rows.Err()
@@ -71,7 +72,7 @@ func (r *SourceRepository) ListLatestItems(ctx context.Context, limit int) ([]re
 		if itemTime.Valid {
 			candidate.Score = float64(itemTime.Time.UTC().Unix())
 		}
-		candidate.Source = "latest"
+		candidate.Source = recallkey.RecallerLatest
 		result = append(result, candidate)
 	}
 	return result, rows.Err()

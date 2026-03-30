@@ -9,6 +9,7 @@ import (
 	recallapp "github.com/kidyme/nexus/offline/internal/application/recall"
 	recdomain "github.com/kidyme/nexus/offline/internal/domain/recommendation"
 	userdomain "github.com/kidyme/nexus/offline/internal/domain/user"
+	"github.com/kidyme/nexus/offline/internal/recallkey"
 )
 
 type fakeUserRepository struct {
@@ -100,14 +101,14 @@ func TestRefreshAllSavesWhenCacheMissing(t *testing.T) {
 			},
 		},
 		[]recdomain.Recaller{
-			&fakeRecaller{name: "popular", items: []recdomain.Candidate{{ItemID: "i-1", Score: 1, Source: "popular"}}},
+			&fakeRecaller{name: recallkey.RecallerPopular, items: []recdomain.Candidate{{ItemID: "i-1", Score: 1, Source: recallkey.RecallerPopular}}},
 		},
 		offlineconfig.RecommendConfig{
 			CacheSize:     10,
 			CacheExpire:   "24h",
 			ActiveUserTTL: "720h",
 			Recallers: []offlineconfig.RecallerConfig{
-				{Name: "popular", Enabled: true, Quota: 1},
+				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NamePopular, Enabled: true, Quota: 1},
 			},
 		},
 	)
@@ -141,36 +142,36 @@ func TestRecallReallocatesRemainingQuota(t *testing.T) {
 		nil,
 		[]recdomain.Recaller{
 			&fakeRecaller{
-				name:   "popular",
+				name:   recallkey.RecallerPopular,
 				limits: &limits,
 				items: []recdomain.Candidate{
-					{ItemID: "i-1", Source: "popular"},
-					{ItemID: "i-2", Source: "popular"},
+					{ItemID: "i-1", Source: recallkey.RecallerPopular},
+					{ItemID: "i-2", Source: recallkey.RecallerPopular},
 				},
 			},
 			&fakeRecaller{
-				name:   "latest",
+				name:   recallkey.RecallerLatest,
 				limits: &limits,
 				items: []recdomain.Candidate{
-					{ItemID: "i-3", Source: "latest"},
-					{ItemID: "i-4", Source: "latest"},
+					{ItemID: "i-3", Source: recallkey.RecallerLatest},
+					{ItemID: "i-4", Source: recallkey.RecallerLatest},
 				},
 			},
 			&fakeRecaller{
-				name:   "fallback",
+				name:   recallkey.Key(recallkey.CategoryExternal, "fallback"),
 				limits: &limits,
 				items: []recdomain.Candidate{
-					{ItemID: "i-5", Source: "fallback"},
-					{ItemID: "i-6", Source: "fallback"},
+					{ItemID: "i-5", Source: recallkey.Key(recallkey.CategoryExternal, "fallback")},
+					{ItemID: "i-6", Source: recallkey.Key(recallkey.CategoryExternal, "fallback")},
 				},
 			},
 		},
 		offlineconfig.RecommendConfig{
 			CacheSize: 5,
 			Recallers: []offlineconfig.RecallerConfig{
-				{Name: "popular", Enabled: true, Quota: 2},
-				{Name: "latest", Enabled: true, Quota: 1},
-				{Name: "fallback", Enabled: true, Quota: 1},
+				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NamePopular, Enabled: true, Quota: 2},
+				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NameLatest, Enabled: true, Quota: 1},
+				{Category: recallkey.CategoryExternal, Name: "fallback", Enabled: true, Quota: 1},
 			},
 		},
 	)
