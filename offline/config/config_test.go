@@ -45,7 +45,12 @@ func TestConfigValidateAcceptsCompleteConfig(t *testing.T) {
 			ActiveUserTTL:         "720h",
 			PositiveFeedbackTypes: []string{"like", "star"},
 			Recallers: []RecallerConfig{
-				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NamePopular, Enabled: true, Quota: 1},
+				PopularRecallerConfig{CommonRecallerConfig: CommonRecallerConfig{
+					Category: recallkey.CategoryNonPersonal,
+					Name:     recallkey.NamePopular,
+					Enabled:  true,
+					Quota:    1,
+				}},
 			},
 		},
 		Training: TrainingConfig{
@@ -54,6 +59,12 @@ func TestConfigValidateAcceptsCompleteConfig(t *testing.T) {
 	}
 	if err := cfg.Validate(); err != nil {
 		t.Fatalf("validate config: %v", err)
+	}
+	if len(cfg.Recommend.Recallers) != 1 {
+		t.Fatalf("expected 1 recaller, got %d", len(cfg.Recommend.Recallers))
+	}
+	if _, ok := cfg.Recommend.Recallers[0].(PopularRecallerConfig); !ok {
+		t.Fatalf("unexpected recaller type %T", cfg.Recommend.Recallers[0])
 	}
 }
 
@@ -87,8 +98,18 @@ func TestConfigValidateRejectsDuplicateRecallerNames(t *testing.T) {
 			ActiveUserTTL:         "720h",
 			PositiveFeedbackTypes: []string{"like", "star"},
 			Recallers: []RecallerConfig{
-				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NamePopular, Enabled: true, Quota: 1},
-				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NamePopular, Enabled: true, Quota: 2},
+				PopularRecallerConfig{CommonRecallerConfig: CommonRecallerConfig{
+					Category: recallkey.CategoryNonPersonal,
+					Name:     recallkey.NamePopular,
+					Enabled:  true,
+					Quota:    1,
+				}},
+				PopularRecallerConfig{CommonRecallerConfig: CommonRecallerConfig{
+					Category: recallkey.CategoryNonPersonal,
+					Name:     recallkey.NamePopular,
+					Enabled:  true,
+					Quota:    2,
+				}},
 			},
 		},
 		Training: TrainingConfig{

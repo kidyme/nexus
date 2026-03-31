@@ -7,7 +7,7 @@ import (
 )
 
 // Builder 定义召回器构造函数。
-type Builder func() recdomain.Recaller
+type Builder func() (recdomain.Recaller, error)
 
 // Registry 管理召回器注册与构建。
 type Registry struct {
@@ -35,7 +35,11 @@ func (r *Registry) Build(names []string) ([]recdomain.Recaller, error) {
 		if !ok {
 			return nil, fmt.Errorf("unsupported recaller: %s", name)
 		}
-		result = append(result, builder())
+		recaller, err := builder()
+		if err != nil {
+			return nil, fmt.Errorf("build recaller %s: %w", name, err)
+		}
+		result = append(result, recaller)
 	}
 	return result, nil
 }

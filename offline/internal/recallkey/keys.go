@@ -12,28 +12,30 @@ const (
 const (
 	NameLatest     = "latest"
 	NamePopular    = "popular"
-	NameUserToUser = "user_to_user"
 	NameItemToItem = "item_to_item"
+	NameUserToUser = "user_to_user"
 	NameMF         = "mf"
 )
 
 const (
-	RecallerLatest     = CategoryNonPersonal + "/" + NameLatest
-	RecallerPopular    = CategoryNonPersonal + "/" + NamePopular
-	RecallerUserToUser = CategoryCF + "/" + NameUserToUser
-	RecallerItemToItem = CategoryCF + "/" + NameItemToItem
-	RecallerMF         = CategoryCF + "/" + NameMF
+	RecallerLatest  = CategoryNonPersonal + "/" + NameLatest
+	RecallerPopular = CategoryNonPersonal + "/" + NamePopular
 )
 
 // Key 返回统一召回器标识。
-func Key(category, name string) string {
-	category = strings.TrimSpace(category)
-	name = strings.TrimSpace(name)
-	if category == "" {
-		return name
+func Key(parts ...string) string {
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		result = append(result, part)
 	}
-	if name == "" {
-		return category
-	}
-	return category + "/" + name
+	return strings.Join(result, "/")
+}
+
+// CFItemToItemRecaller 返回 item-to-item 召回器实例标识。
+func CFItemToItemRecaller(recallerType string) string {
+	return Key(CategoryCF, NameItemToItem, recallerType)
 }

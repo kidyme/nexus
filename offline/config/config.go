@@ -16,12 +16,12 @@ import (
 
 // Config 定义 offline 运行时配置。
 type Config struct {
-	Service   ServiceConfig   `mapstructure:"service"`
-	MySQL     MySQLConfig     `mapstructure:"mysql"`
-	Redis     RedisConfig     `mapstructure:"redis"`
-	Worker    WorkerConfig    `mapstructure:"worker"`
-	Recommend RecommendConfig `mapstructure:"recommend"`
-	Training  TrainingConfig  `mapstructure:"training"`
+	Service   ServiceConfig
+	MySQL     MySQLConfig
+	Redis     RedisConfig
+	Worker    WorkerConfig
+	Recommend RecommendConfig
+	Training  TrainingConfig
 }
 
 // ServiceConfig 定义服务级配置。
@@ -79,26 +79,277 @@ type WorkerConfig struct {
 	TickInterval string `mapstructure:"tickInterval"`
 }
 
-// RecallerConfig 定义单个召回器配置。
-type RecallerConfig struct {
-	Category string `mapstructure:"category"`
-	Name     string `mapstructure:"name"`
-	Enabled  bool   `mapstructure:"enabled"`
-	Quota    int    `mapstructure:"quota"`
+// CommonRecallerConfig 定义召回器实例的通用配置。
+type CommonRecallerConfig struct {
+	Category string
+	Name     string
+	Type     string
+	Enabled  bool
+	Quota    int
 }
 
 // Key 返回召回器唯一标识。
-func (c RecallerConfig) Key() string {
-	return recallkey.Key(c.Category, c.Name)
+func (c CommonRecallerConfig) Key() string {
+	return recallkey.Key(c.Category, c.Name, c.Type)
 }
+
+// RecallerConfig 定义公开的强类型召回器配置接口。
+type RecallerConfig interface {
+	Common() CommonRecallerConfig
+	Key() string
+}
+
+// ItemToItemRecallerConfig 定义 item-to-item 配置接口。
+type ItemToItemRecallerConfig interface {
+	RecallerConfig
+	itemToItemRecallerConfig()
+}
+
+// PopularRecallerConfig 定义 popular 召回器配置。
+type PopularRecallerConfig struct {
+	CommonRecallerConfig
+}
+
+func (c PopularRecallerConfig) Common() CommonRecallerConfig { return c.CommonRecallerConfig }
+func (c PopularRecallerConfig) Key() string                  { return c.CommonRecallerConfig.Key() }
+
+// LatestRecallerConfig 定义 latest 召回器配置。
+type LatestRecallerConfig struct {
+	CommonRecallerConfig
+}
+
+func (c LatestRecallerConfig) Common() CommonRecallerConfig { return c.CommonRecallerConfig }
+func (c LatestRecallerConfig) Key() string                  { return c.CommonRecallerConfig.Key() }
+
+// UserToUserRecallerConfig 定义 user_to_user 召回器配置。
+type UserToUserRecallerConfig struct {
+	CommonRecallerConfig
+}
+
+func (c UserToUserRecallerConfig) Common() CommonRecallerConfig { return c.CommonRecallerConfig }
+func (c UserToUserRecallerConfig) Key() string                  { return c.CommonRecallerConfig.Key() }
+
+// MFRecallerConfig 定义 mf 召回器配置。
+type MFRecallerConfig struct {
+	CommonRecallerConfig
+}
+
+func (c MFRecallerConfig) Common() CommonRecallerConfig { return c.CommonRecallerConfig }
+func (c MFRecallerConfig) Key() string                  { return c.CommonRecallerConfig.Key() }
+
+// ExternalRecallerConfig 定义 external 召回器配置。
+type ExternalRecallerConfig struct {
+	CommonRecallerConfig
+}
+
+func (c ExternalRecallerConfig) Common() CommonRecallerConfig { return c.CommonRecallerConfig }
+func (c ExternalRecallerConfig) Key() string                  { return c.CommonRecallerConfig.Key() }
+
+// ItemToItemUsersRecallerConfig 定义 users 型 item-to-item 配置。
+type ItemToItemUsersRecallerConfig struct {
+	CommonRecallerConfig
+	NeighborCount int
+	Shrinkage     float64
+}
+
+func (c ItemToItemUsersRecallerConfig) Common() CommonRecallerConfig { return c.CommonRecallerConfig }
+func (c ItemToItemUsersRecallerConfig) Key() string                  { return c.CommonRecallerConfig.Key() }
+func (ItemToItemUsersRecallerConfig) itemToItemRecallerConfig()      {}
+
+// ItemToItemTagsRecallerConfig 定义 tags 型 item-to-item 配置。
+type ItemToItemTagsRecallerConfig struct {
+	CommonRecallerConfig
+	NeighborCount int
+	LabelPaths    []string
+	MinCommonTags int
+}
+
+func (c ItemToItemTagsRecallerConfig) Common() CommonRecallerConfig { return c.CommonRecallerConfig }
+func (c ItemToItemTagsRecallerConfig) Key() string                  { return c.CommonRecallerConfig.Key() }
+func (ItemToItemTagsRecallerConfig) itemToItemRecallerConfig()      {}
+
+// ItemToItemEmbeddingRecallerConfig 定义 embedding 型 item-to-item 配置。
+type ItemToItemEmbeddingRecallerConfig struct {
+	CommonRecallerConfig
+	NeighborCount int
+	LabelPath     string
+	MinScore      float64
+}
+
+func (c ItemToItemEmbeddingRecallerConfig) Common() CommonRecallerConfig {
+	return c.CommonRecallerConfig
+}
+func (c ItemToItemEmbeddingRecallerConfig) Key() string             { return c.CommonRecallerConfig.Key() }
+func (ItemToItemEmbeddingRecallerConfig) itemToItemRecallerConfig() {}
+
+// ItemToItemAutoRecallerConfig 定义 auto 型 item-to-item 配置。
+type ItemToItemAutoRecallerConfig struct {
+	CommonRecallerConfig
+	NeighborCount int
+	LabelPaths    []string
+	MinCommonTags int
+	UserWeight    float64
+	TagWeight     float64
+}
+
+func (c ItemToItemAutoRecallerConfig) Common() CommonRecallerConfig { return c.CommonRecallerConfig }
+func (c ItemToItemAutoRecallerConfig) Key() string                  { return c.CommonRecallerConfig.Key() }
+func (ItemToItemAutoRecallerConfig) itemToItemRecallerConfig()      {}
 
 // RecommendConfig 定义离线推荐配置。
 type RecommendConfig struct {
-	CacheSize             int              `mapstructure:"cacheSize"`
-	CacheExpire           string           `mapstructure:"cacheExpire"`
-	ActiveUserTTL         string           `mapstructure:"activeUserTTL"`
-	PositiveFeedbackTypes []string         `mapstructure:"positiveFeedbackTypes"`
-	Recallers             []RecallerConfig `mapstructure:"recallers"`
+	CacheSize             int
+	CacheExpire           string
+	ActiveUserTTL         string
+	PositiveFeedbackTypes []string
+	Recallers             []RecallerConfig
+}
+
+// TrainingConfig 定义训练配置。
+type TrainingConfig struct {
+	Backend string `mapstructure:"backend"`
+}
+
+type rawConfig struct {
+	Service   ServiceConfig      `mapstructure:"service"`
+	MySQL     MySQLConfig        `mapstructure:"mysql"`
+	Redis     RedisConfig        `mapstructure:"redis"`
+	Worker    WorkerConfig       `mapstructure:"worker"`
+	Recommend rawRecommendConfig `mapstructure:"recommend"`
+	Training  TrainingConfig     `mapstructure:"training"`
+}
+
+type rawRecommendConfig struct {
+	CacheSize             int                 `mapstructure:"cacheSize"`
+	CacheExpire           string              `mapstructure:"cacheExpire"`
+	ActiveUserTTL         string              `mapstructure:"activeUserTTL"`
+	PositiveFeedbackTypes []string            `mapstructure:"positiveFeedbackTypes"`
+	Recallers             []rawRecallerConfig `mapstructure:"recallers"`
+}
+
+type rawRecallerConfig struct {
+	Category      string                       `mapstructure:"category"`
+	Name          string                       `mapstructure:"name"`
+	Type          string                       `mapstructure:"type"`
+	Enabled       bool                         `mapstructure:"enabled"`
+	Quota         int                          `mapstructure:"quota"`
+	NeighborCount int                          `mapstructure:"neighborCount"`
+	Users         rawItemToItemUsersConfig     `mapstructure:"users"`
+	Tags          rawItemToItemTagsConfig      `mapstructure:"tags"`
+	Embedding     rawItemToItemEmbeddingConfig `mapstructure:"embedding"`
+	Auto          rawItemToItemAutoConfig      `mapstructure:"auto"`
+}
+
+type rawItemToItemUsersConfig struct {
+	Shrinkage float64 `mapstructure:"shrinkage"`
+}
+
+type rawItemToItemTagsConfig struct {
+	LabelPaths    []string `mapstructure:"labelPaths"`
+	MinCommonTags int      `mapstructure:"minCommonTags"`
+}
+
+type rawItemToItemEmbeddingConfig struct {
+	LabelPath string  `mapstructure:"labelPath"`
+	MinScore  float64 `mapstructure:"minScore"`
+}
+
+type rawItemToItemAutoConfig struct {
+	UserWeight float64 `mapstructure:"userWeight"`
+	TagWeight  float64 `mapstructure:"tagWeight"`
+}
+
+func (r rawConfig) toConfig() (*Config, error) {
+	recallers := make([]RecallerConfig, 0, len(r.Recommend.Recallers))
+	for _, rawRecaller := range r.Recommend.Recallers {
+		recaller, err := rawRecaller.toConfig()
+		if err != nil {
+			return nil, err
+		}
+		recallers = append(recallers, recaller)
+	}
+	return &Config{
+		Service: r.Service,
+		MySQL:   r.MySQL,
+		Redis:   r.Redis,
+		Worker:  r.Worker,
+		Recommend: RecommendConfig{
+			CacheSize:             r.Recommend.CacheSize,
+			CacheExpire:           r.Recommend.CacheExpire,
+			ActiveUserTTL:         r.Recommend.ActiveUserTTL,
+			PositiveFeedbackTypes: append([]string(nil), r.Recommend.PositiveFeedbackTypes...),
+			Recallers:             recallers,
+		},
+		Training: r.Training,
+	}, nil
+}
+
+func (r rawRecallerConfig) toConfig() (RecallerConfig, error) {
+	common := CommonRecallerConfig{
+		Category: r.Category,
+		Name:     r.Name,
+		Type:     r.Type,
+		Enabled:  r.Enabled,
+		Quota:    r.Quota,
+	}
+	switch common.Category {
+	case recallkey.CategoryNonPersonal:
+		switch common.Name {
+		case recallkey.NamePopular:
+			return PopularRecallerConfig{CommonRecallerConfig: common}, nil
+		case recallkey.NameLatest:
+			return LatestRecallerConfig{CommonRecallerConfig: common}, nil
+		default:
+			return nil, fmt.Errorf("offline config: unsupported non_personal recaller %q", common.Name)
+		}
+	case recallkey.CategoryCF:
+		switch common.Name {
+		case recallkey.NameItemToItem:
+			switch common.Type {
+			case "users":
+				return ItemToItemUsersRecallerConfig{
+					CommonRecallerConfig: common,
+					NeighborCount:        r.NeighborCount,
+					Shrinkage:            r.Users.Shrinkage,
+				}, nil
+			case "tags":
+				return ItemToItemTagsRecallerConfig{
+					CommonRecallerConfig: common,
+					NeighborCount:        r.NeighborCount,
+					LabelPaths:           append([]string(nil), r.Tags.LabelPaths...),
+					MinCommonTags:        r.Tags.MinCommonTags,
+				}, nil
+			case "embedding":
+				return ItemToItemEmbeddingRecallerConfig{
+					CommonRecallerConfig: common,
+					NeighborCount:        r.NeighborCount,
+					LabelPath:            r.Embedding.LabelPath,
+					MinScore:             r.Embedding.MinScore,
+				}, nil
+			case "auto":
+				return ItemToItemAutoRecallerConfig{
+					CommonRecallerConfig: common,
+					NeighborCount:        r.NeighborCount,
+					LabelPaths:           append([]string(nil), r.Tags.LabelPaths...),
+					MinCommonTags:        r.Tags.MinCommonTags,
+					UserWeight:           r.Auto.UserWeight,
+					TagWeight:            r.Auto.TagWeight,
+				}, nil
+			default:
+				return nil, fmt.Errorf("offline config: recommend.recallers[%s].type %q is unsupported", common.Key(), common.Type)
+			}
+		case recallkey.NameUserToUser:
+			return UserToUserRecallerConfig{CommonRecallerConfig: common}, nil
+		case recallkey.NameMF:
+			return MFRecallerConfig{CommonRecallerConfig: common}, nil
+		default:
+			return nil, fmt.Errorf("offline config: unsupported cf recaller name %q", common.Name)
+		}
+	case recallkey.CategoryExternal:
+		return ExternalRecallerConfig{CommonRecallerConfig: common}, nil
+	default:
+		return nil, fmt.Errorf("offline config: unsupported recaller category %q", common.Category)
+	}
 }
 
 // Hash 返回推荐配置摘要。
@@ -112,12 +363,22 @@ func (c RecommendConfig) Hash() string {
 func (c RecommendConfig) EnabledRecallers() []RecallerConfig {
 	result := make([]RecallerConfig, 0, len(c.Recallers))
 	for _, recaller := range c.Recallers {
-		if !recaller.Enabled || strings.TrimSpace(recaller.Name) == "" {
+		if !recaller.Common().Enabled || strings.TrimSpace(recaller.Common().Name) == "" {
 			continue
 		}
 		result = append(result, recaller)
 	}
 	return result
+}
+
+// HasEnabledRecaller 返回指定标识的召回器是否启用。
+func (c RecommendConfig) HasEnabledRecaller(key string) bool {
+	for _, recaller := range c.EnabledRecallers() {
+		if recaller.Key() == key {
+			return true
+		}
+	}
+	return false
 }
 
 // EnabledRecallerKeys 返回启用召回器标识列表。
@@ -153,10 +414,7 @@ func (c RecommendConfig) RecallersByKeys(keys []string) []RecallerConfig {
 // AllocateRecallerQuotas 按整数比值为召回器分配配额。
 func AllocateRecallerQuotas(total int, recallers []RecallerConfig) map[string]int {
 	result := make(map[string]int)
-	if total <= 0 {
-		return result
-	}
-	if len(recallers) == 0 {
+	if total <= 0 || len(recallers) == 0 {
 		return result
 	}
 
@@ -167,8 +425,8 @@ func AllocateRecallerQuotas(total int, recallers []RecallerConfig) map[string]in
 
 	totalWeight := 0
 	for _, recaller := range recallers {
-		if recaller.Quota > 0 {
-			totalWeight += recaller.Quota
+		if recaller.Common().Quota > 0 {
+			totalWeight += recaller.Common().Quota
 		}
 	}
 	if totalWeight <= 0 {
@@ -178,7 +436,7 @@ func AllocateRecallerQuotas(total int, recallers []RecallerConfig) map[string]in
 	remaining := total
 	remainders := make([]remainder, 0, len(recallers))
 	for _, recaller := range recallers {
-		weight := recaller.Quota
+		weight := recaller.Common().Quota
 		if weight < 0 {
 			weight = 0
 		}
@@ -221,7 +479,7 @@ func AllocateRecallerQuotas(total int, recallers []RecallerConfig) map[string]in
 
 	targetNames := make([]string, 0, len(recallers))
 	for _, recaller := range recallers {
-		if recaller.Quota > 0 {
+		if recaller.Common().Quota > 0 {
 			targetNames = append(targetNames, recaller.Key())
 		}
 	}
@@ -231,11 +489,6 @@ func AllocateRecallerQuotas(total int, recallers []RecallerConfig) map[string]in
 		remaining--
 	}
 	return result
-}
-
-// TrainingConfig 定义训练配置。
-type TrainingConfig struct {
-	Backend string `mapstructure:"backend"`
 }
 
 // MustLoad 加载 offline 配置，失败时直接 panic。
@@ -257,8 +510,12 @@ func Load() (*Config, error) {
 		return nil, errors.New("offline config: configs/config.yaml is required")
 	}
 
-	cfg := &Config{}
-	if err := v.Unmarshal(cfg); err != nil {
+	raw := &rawConfig{}
+	if err := v.Unmarshal(raw); err != nil {
+		return nil, err
+	}
+	cfg, err := raw.toConfig()
+	if err != nil {
 		return nil, err
 	}
 	if err := cfg.Validate(); err != nil {
@@ -328,37 +585,25 @@ func (c *Config) Validate() error {
 	if len(c.Recommend.EnabledRecallers()) == 0 {
 		return errors.New("offline config: at least one enabled recommend.recallers entry is required")
 	}
+
 	seenRecallers := make(map[string]struct{}, len(c.Recommend.EnabledRecallers()))
 	for _, recaller := range c.Recommend.EnabledRecallers() {
-		if strings.TrimSpace(recaller.Category) == "" {
+		common := recaller.Common()
+		if strings.TrimSpace(common.Category) == "" {
 			return errors.New("offline config: recommend.recallers.category is required")
 		}
-		if strings.TrimSpace(recaller.Name) == "" {
+		if strings.TrimSpace(common.Name) == "" {
 			return errors.New("offline config: recommend.recallers.name is required")
 		}
-		switch recaller.Category {
-		case recallkey.CategoryNonPersonal:
-			if recaller.Name != recallkey.NameLatest && recaller.Name != recallkey.NamePopular {
-				return fmt.Errorf("offline config: unsupported non_personal recaller %q", recaller.Name)
-			}
-		case recallkey.CategoryCF:
-			switch recaller.Name {
-			case recallkey.NameUserToUser, recallkey.NameItemToItem, recallkey.NameMF:
-			default:
-				return fmt.Errorf("offline config: unsupported cf recaller %q", recaller.Name)
-			}
-		case recallkey.CategoryExternal:
-			// external 支持自定义名称，由具体适配器决定如何绑定。
-		default:
-			return fmt.Errorf("offline config: unsupported recaller category %q", recaller.Category)
+		if common.Quota <= 0 {
+			return fmt.Errorf("offline config: recommend.recallers[%s].quota must be greater than 0", recaller.Key())
 		}
-		key := recaller.Key()
-		if _, ok := seenRecallers[key]; ok {
-			return fmt.Errorf("offline config: duplicate recommend.recallers key %q", key)
+		if _, ok := seenRecallers[recaller.Key()]; ok {
+			return fmt.Errorf("offline config: duplicate recommend.recallers key %q", recaller.Key())
 		}
-		seenRecallers[key] = struct{}{}
-		if recaller.Quota <= 0 {
-			return fmt.Errorf("offline config: recommend.recallers[%s].quota must be greater than 0", key)
+		seenRecallers[recaller.Key()] = struct{}{}
+		if err := validateRecallerConfig(recaller); err != nil {
+			return err
 		}
 	}
 
@@ -386,4 +631,105 @@ func parseRequiredDuration(field, raw string) (time.Duration, error) {
 		return 0, fmt.Errorf("offline config: invalid %s: %w", field, err)
 	}
 	return value, nil
+}
+
+func validateRecallerConfig(recaller RecallerConfig) error {
+	common := recaller.Common()
+	switch typed := recaller.(type) {
+	case PopularRecallerConfig:
+		return validateNonPersonalRecaller(common, recallkey.NamePopular)
+	case LatestRecallerConfig:
+		return validateNonPersonalRecaller(common, recallkey.NameLatest)
+	case UserToUserRecallerConfig:
+		return validateCFRecallerBase(common, recallkey.NameUserToUser)
+	case MFRecallerConfig:
+		return validateCFRecallerBase(common, recallkey.NameMF)
+	case ExternalRecallerConfig:
+		if common.Category != recallkey.CategoryExternal {
+			return fmt.Errorf("offline config: external recaller %q has invalid category %q", recaller.Key(), common.Category)
+		}
+		return nil
+	case ItemToItemUsersRecallerConfig:
+		if err := validateItemToItemCommon(common, "users"); err != nil {
+			return err
+		}
+		if typed.NeighborCount <= 0 {
+			return fmt.Errorf("offline config: recommend.recallers[%s].neighborCount must be greater than 0", recaller.Key())
+		}
+		if typed.Shrinkage < 0 {
+			return fmt.Errorf("offline config: recommend.recallers[%s].users.shrinkage must be greater than or equal to 0", recaller.Key())
+		}
+		return nil
+	case ItemToItemTagsRecallerConfig:
+		if err := validateItemToItemCommon(common, "tags"); err != nil {
+			return err
+		}
+		if typed.NeighborCount <= 0 {
+			return fmt.Errorf("offline config: recommend.recallers[%s].neighborCount must be greater than 0", recaller.Key())
+		}
+		return nil
+	case ItemToItemEmbeddingRecallerConfig:
+		if err := validateItemToItemCommon(common, "embedding"); err != nil {
+			return err
+		}
+		if typed.NeighborCount <= 0 {
+			return fmt.Errorf("offline config: recommend.recallers[%s].neighborCount must be greater than 0", recaller.Key())
+		}
+		if strings.TrimSpace(typed.LabelPath) == "" {
+			return fmt.Errorf("offline config: recommend.recallers[%s].embedding.labelPath is required for embedding type", recaller.Key())
+		}
+		return nil
+	case ItemToItemAutoRecallerConfig:
+		if err := validateItemToItemCommon(common, "auto"); err != nil {
+			return err
+		}
+		if typed.NeighborCount <= 0 {
+			return fmt.Errorf("offline config: recommend.recallers[%s].neighborCount must be greater than 0", recaller.Key())
+		}
+		if typed.UserWeight <= 0 {
+			return fmt.Errorf("offline config: recommend.recallers[%s].auto.userWeight must be greater than 0", recaller.Key())
+		}
+		if typed.TagWeight <= 0 {
+			return fmt.Errorf("offline config: recommend.recallers[%s].auto.tagWeight must be greater than 0", recaller.Key())
+		}
+		return nil
+	default:
+		return fmt.Errorf("offline config: unsupported recaller type %T", recaller)
+	}
+}
+
+func validateNonPersonalRecaller(common CommonRecallerConfig, expectedName string) error {
+	if common.Category != recallkey.CategoryNonPersonal {
+		return fmt.Errorf("offline config: recaller %q has invalid category %q", common.Key(), common.Category)
+	}
+	if common.Name != expectedName {
+		return fmt.Errorf("offline config: unsupported non_personal recaller %q", common.Name)
+	}
+	if strings.TrimSpace(common.Type) != "" {
+		return fmt.Errorf("offline config: non_personal recaller %q must not set type", common.Key())
+	}
+	return nil
+}
+
+func validateCFRecallerBase(common CommonRecallerConfig, expectedName string) error {
+	if common.Category != recallkey.CategoryCF {
+		return fmt.Errorf("offline config: recaller %q has invalid category %q", common.Key(), common.Category)
+	}
+	if common.Name != expectedName {
+		return fmt.Errorf("offline config: unsupported cf recaller name %q", common.Name)
+	}
+	return nil
+}
+
+func validateItemToItemCommon(common CommonRecallerConfig, expectedType string) error {
+	if err := validateCFRecallerBase(common, recallkey.NameItemToItem); err != nil {
+		return err
+	}
+	if strings.TrimSpace(common.Type) == "" {
+		return errors.New("offline config: recommend.recallers item_to_item type is required")
+	}
+	if common.Type != expectedType {
+		return fmt.Errorf("offline config: recommend.recallers[%s].type %q is unsupported", common.Key(), common.Type)
+	}
+	return nil
 }

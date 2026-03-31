@@ -36,10 +36,55 @@ recommend:
       name: "popular"
       enabled: true
       quota: 1
+
     - category: "non_personal"
       name: "latest"
       enabled: true
       quota: 1
+
+    - category: "cf"
+      name: "item_to_item"
+      type: "users"
+      enabled: false
+      quota: 1
+      neighborCount: 50
+      users:
+        shrinkage: 10
+
+    - category: "cf"
+      name: "item_to_item"
+      type: "tags"
+      enabled: false
+      quota: 1
+      neighborCount: 50
+      tags:
+        labelPaths:
+          - "genres"
+        minCommonTags: 1
+
+    - category: "cf"
+      name: "item_to_item"
+      type: "embedding"
+      enabled: false
+      quota: 1
+      neighborCount: 50
+      embedding:
+        labelPath: "embedding"
+        minScore: 0
+
+    - category: "cf"
+      name: "item_to_item"
+      type: "auto"
+      enabled: false
+      quota: 1
+      neighborCount: 50
+      tags:
+        labelPaths:
+          - "genres"
+        minCommonTags: 1
+      auto:
+        userWeight: 0.7
+        tagWeight: 0.3
 
 training:
   backend: "cpu"

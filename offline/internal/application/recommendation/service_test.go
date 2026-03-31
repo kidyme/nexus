@@ -2,6 +2,7 @@ package recommendation
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -60,8 +61,11 @@ func (f *fakeRecaller) Recall(_ context.Context, _ userdomain.User, limit int) (
 }
 
 type fakeSourceRepository struct {
-	popularFn func(context.Context, []string, int) ([]recdomain.Candidate, error)
-	latestFn  func(context.Context, int) ([]recdomain.Candidate, error)
+	popularFn       func(context.Context, []string, int) ([]recdomain.Candidate, error)
+	latestFn        func(context.Context, int) ([]recdomain.Candidate, error)
+	itemDocsFn      func(context.Context) ([]recdomain.ItemDocument, error)
+	userFeedbacksFn func(context.Context, []string) ([]recdomain.UserItemFeedback, error)
+	itemDigestFn    func(context.Context, []string) (string, error)
 }
 
 func (f *fakeSourceRepository) ListPopularItems(ctx context.Context, feedbackTypes []string, limit int) ([]recdomain.Candidate, error) {
@@ -76,6 +80,27 @@ func (f *fakeSourceRepository) ListLatestItems(ctx context.Context, limit int) (
 		return nil, nil
 	}
 	return f.latestFn(ctx, limit)
+}
+
+func (f *fakeSourceRepository) ListItemDocuments(ctx context.Context) ([]recdomain.ItemDocument, error) {
+	if f.itemDocsFn == nil {
+		return nil, nil
+	}
+	return f.itemDocsFn(ctx)
+}
+
+func (f *fakeSourceRepository) ListPositiveUserItemFeedback(ctx context.Context, feedbackTypes []string) ([]recdomain.UserItemFeedback, error) {
+	if f.userFeedbacksFn == nil {
+		return nil, nil
+	}
+	return f.userFeedbacksFn(ctx, feedbackTypes)
+}
+
+func (f *fakeSourceRepository) GetItemToItemDigest(ctx context.Context, feedbackTypes []string) (string, error) {
+	if f.itemDigestFn == nil {
+		return "", nil
+	}
+	return f.itemDigestFn(ctx, feedbackTypes)
 }
 
 func TestRefreshAllSavesWhenCacheMissing(t *testing.T) {
@@ -108,7 +133,12 @@ func TestRefreshAllSavesWhenCacheMissing(t *testing.T) {
 			CacheExpire:   "24h",
 			ActiveUserTTL: "720h",
 			Recallers: []offlineconfig.RecallerConfig{
-				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NamePopular, Enabled: true, Quota: 1},
+				offlineconfig.PopularRecallerConfig{CommonRecallerConfig: offlineconfig.CommonRecallerConfig{
+					Category: recallkey.CategoryNonPersonal,
+					Name:     recallkey.NamePopular,
+					Enabled:  true,
+					Quota:    1,
+				}},
 			},
 		},
 	)
@@ -169,9 +199,24 @@ func TestRecallReallocatesRemainingQuota(t *testing.T) {
 		offlineconfig.RecommendConfig{
 			CacheSize: 5,
 			Recallers: []offlineconfig.RecallerConfig{
-				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NamePopular, Enabled: true, Quota: 2},
-				{Category: recallkey.CategoryNonPersonal, Name: recallkey.NameLatest, Enabled: true, Quota: 1},
-				{Category: recallkey.CategoryExternal, Name: "fallback", Enabled: true, Quota: 1},
+				offlineconfig.PopularRecallerConfig{CommonRecallerConfig: offlineconfig.CommonRecallerConfig{
+					Category: recallkey.CategoryNonPersonal,
+					Name:     recallkey.NamePopular,
+					Enabled:  true,
+					Quota:    2,
+				}},
+				offlineconfig.LatestRecallerConfig{CommonRecallerConfig: offlineconfig.CommonRecallerConfig{
+					Category: recallkey.CategoryNonPersonal,
+					Name:     recallkey.NameLatest,
+					Enabled:  true,
+					Quota:    1,
+				}},
+				offlineconfig.ExternalRecallerConfig{CommonRecallerConfig: offlineconfig.CommonRecallerConfig{
+					Category: recallkey.CategoryExternal,
+					Name:     "fallback",
+					Enabled:  true,
+					Quota:    1,
+				}},
 			},
 		},
 	)
@@ -213,4 +258,13 @@ func TestLatestRecallerRecall(t *testing.T) {
 	if len(items) != 1 || items[0].ItemID != "i-2" {
 		t.Fatalf("unexpected items %#v", items)
 	}
+}
+
+func mustJSON(t *testing.T, value any) json.RawMessage {
+	t.Helper()
+	data, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("marshal json: %v", err)
+	}
+	return data
 }

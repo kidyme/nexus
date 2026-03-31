@@ -15,6 +15,8 @@ const (
 	recommendCacheKey      = "recommend_cache/"
 	recommendUpdateTimeKey = "recommend_update_time/"
 	recommendDigestKey     = "recommend_digest/"
+	itemToItemNeighborsKey = "item_to_item_neighbors/"
+	itemToItemDigestKey    = "item_to_item_digest/"
 )
 
 // CacheRepository 是基于 Redis 的推荐缓存仓储实现。
@@ -75,5 +77,37 @@ func (r *CacheRepository) Save(ctx context.Context, userID string, items []recdo
 		recommendCacheKey + userID:      string(payload),
 		recommendUpdateTimeKey + userID: strconv.FormatInt(meta.UpdateTime.UTC().UnixMilli(), 10),
 		recommendDigestKey + userID:     meta.Digest,
+	})
+}
+
+// GetItemToItemNeighbors 读取 item-to-item 预计算邻居。
+func (r *CacheRepository) GetItemToItemNeighbors(ctx context.Context, key string) (map[string][]recdomain.Candidate, string, error) {
+	digest, err := r.client.Get(ctx, itemToItemDigestKey+key)
+	if err != nil {
+		return nil, "", err
+	}
+	payload, err := r.client.Get(ctx, itemToItemNeighborsKey+key)
+	if err != nil {
+		return nil, "", err
+	}
+	if payload == "" {
+		return nil, digest, nil
+	}
+	var neighbors map[string][]recdomain.Candidate
+	if err := json.Unmarshal([]byte(payload), &neighbors); err != nil {
+		return nil, "", err
+	}
+	return neighbors, digest, nil
+}
+
+// SaveItemToItemNeighbors 写入 item-to-item 预计算邻居。
+func (r *CacheRepository) SaveItemToItemNeighbors(ctx context.Context, key string, neighbors map[string][]recdomain.Candidate, digest string) error {
+	payload, err := json.Marshal(neighbors)
+	if err != nil {
+		return err
+	}
+	return r.client.SetMany(ctx, map[string]string{
+		itemToItemNeighborsKey + key: string(payload),
+		itemToItemDigestKey + key:    digest,
 	})
 }
